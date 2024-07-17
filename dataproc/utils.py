@@ -377,7 +377,9 @@ class CycloneDataLoader:
 class ModelDataLoader:
     def __init__(self, batch_size, o_size=64, n_size=128, 
                  augment=False, 
-                 test=False, mode="sr", shuffle=True):
+                 test=False, mode="sr", shuffle=False#True
+                 ,shuffle_batch = True
+                 ):
         self.batch_size = batch_size
         self.shuffle = shuffle        
         
@@ -471,7 +473,11 @@ class ModelDataLoader:
             size -= size % batch_size
         idx = torch.tensor(list(range(size)))
         if self.shuffle: idx = torch.randperm(size)
-        self.random_idx = idx.reshape(-1, batch_size)
+        random_idx = idx.reshape(-1, batch_size)
+        if self.batch_shuffle:
+            random_idx = random_idx[torch.randperm(size / batch_size)]
+        self.random_idx = random_idx
+
 
     def get_batch(self, idx): 
         if self.mode == "sr":
