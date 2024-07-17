@@ -11,7 +11,7 @@ from tqdm import tqdm
 from utils import *
 from send_emails import send_txt_email
 
-BASE_DIR = "/vol/bitbucket/pn222/satellite/dataloader/64_PRP/"
+BASE_DIR = "/vol/bitbucket/zr523/research_project/satellite/dataloader/64_PRP/"
 
 import sys
 sys.stdout = open(f'DL_PRP_LOG_{datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")}.log','wt')

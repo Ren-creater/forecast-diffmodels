@@ -21,7 +21,7 @@ warnings.filterwarnings("ignore")
 
 sys.stdout = open(f'AME_LOG_{datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")}.log','wt')
 
-BASE_DIR = "/vol/bitbucket/pn222/satellite/goes_east"
+BASE_DIR = "/vol/bitbucket/zr523/research_project/satellite/goes_east"
 
 cyclones_path = "./list_of_cyclones.xlsx"
 df = pd.read_excel(cyclones_path)

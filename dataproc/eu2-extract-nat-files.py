@@ -11,7 +11,7 @@ import sys
 sys.stdout = open(f'EU_EXTRACT_LOG_{datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")}.log','wt')
 
 name = "*"
-extracted_paths = glob.glob(f"/vol/bitbucket/pn222/satellite/msg/data/native/{name}/*.nat")
+extracted_paths = glob.glob(f"/vol/bitbucket/zr523/research_project/satellite/msg/data/native/{name}/*.nat")
 
 def extract_files_with_extension(zip_file_path, target_extension, extraction_path):
     name = zip_file_path.split("/")[-2]
