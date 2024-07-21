@@ -301,7 +301,7 @@ class Cyclone:
         return f"{self.abbv_region}_{name}"
 
     def __init__(self, region, name):        
-        self.BASE_DIR = "/vol/bitbucket/zr523/satellite/metadata"
+        self.BASE_DIR = "/vol/bitbucket/zr523/research_project/satellite/metadata"
         self.filename = self._get_filename(region, name)
         with open(f"{self.BASE_DIR}/{self.filename}.metadata", 'rb') as metadata_file:
             self.metadata = pickle.load(metadata_file)
@@ -381,7 +381,8 @@ class ModelDataLoader:
                  ,shuffle_batch = True
                  ):
         self.batch_size = batch_size
-        self.shuffle = shuffle        
+        self.shuffle = shuffle
+        self.shuffle_batch = shuffle_batch        
         
         self.mode = mode
                      
