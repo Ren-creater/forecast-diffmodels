@@ -19,7 +19,7 @@ from matplotlib import pyplot as plt
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
 
-sys.path.append("/vol/bitbucket/zr523/research_project/forecast-diffmodelsdataproc")
+sys.path.append("/vol/bitbucket/zr523/research_project/forecast-diffmodels/dataproc")
 from utils import *
 
 def plot_images(images):
@@ -88,7 +88,7 @@ def get_satellite_data(args):
     else:
         c_dataloader_fns = glob.glob(args.dataset_path + f"/*.dat")
 
-    test_set = pickle.load(open("/vol/bitbucket/zr523/research_project/forecast-diffmodelsdataproc/test_set.pkl", "rb"))
+    test_set = pickle.load(open("/vol/bitbucket/zr523/research_project/forecast-diffmodels/dataproc/test_set.pkl", "rb"))
 
     if hasattr(args, "augment"): augment = args.augment
     else: augment = False
