@@ -12,8 +12,8 @@ from datetime import datetime, timedelta
 from pyproj import Proj
 
 import sys
-sys.path.append("/homes/pn222/Work/MSc_Project_pn222/imagen/imagen/")
-
+sys.path.append("/homes/zr523/Work/MSc_Project_zr523/imagen/imagen/")
+"/homes/zr523/Work/MSc_Project_zr523/imagen/imagen/"
 from imagen_pytorch import Unet, Imagen, ImagenTrainer, NullUnet
 
 abbv_to_region = {
@@ -82,7 +82,7 @@ class FCDiffModel:
                 condition_on_continuous = True,
                 continuous_embed_dim = 64*64*1,
             )
-            ckpt_trainer_path = f"/vol/bitbucket/pn222/models/{self.run_name}/models/64_FC_woERA5/ckpt_trainer_1_{best_epoch:03}.pt"
+            ckpt_trainer_path = f"/vol/bitbucket/zr523/models/{self.run_name}/models/64_FC_woERA5/ckpt_trainer_1_{best_epoch:03}.pt"
         else:    
             imagen = Imagen(
                 unets = unets,
@@ -92,7 +92,7 @@ class FCDiffModel:
                 condition_on_continuous = True,
                 continuous_embed_dim = 64*64*4,
             )
-            ckpt_trainer_path = f"/vol/bitbucket/pn222/models/{self.run_name}/models/64_FC/ckpt_trainer_1_{best_epoch:03}.pt"
+            ckpt_trainer_path = f"/vol/bitbucket/zr523/models/{self.run_name}/models/64_FC/ckpt_trainer_1_{best_epoch:03}.pt"
         
         trainer = ImagenTrainer(imagen, lr=3e-4, verbose=False).cuda()
         trainer.load(ckpt_trainer_path)  
@@ -154,7 +154,7 @@ class SRDiffModel:
                 condition_on_continuous = False,
                 continuous_embed_dim = None,
             )
-            ckpt_trainer_path = f"/vol/bitbucket/pn222/models/{self.run_name}/models/64_128_woERA5/ckpt_trainer_2_{best_epoch:03}.pt"
+            ckpt_trainer_path = f"/vol/bitbucket/zr523/models/{self.run_name}/models/64_128_woERA5/ckpt_trainer_2_{best_epoch:03}.pt"
         else:
             imagen = Imagen(
                 unets = unets,
@@ -164,7 +164,7 @@ class SRDiffModel:
                 condition_on_continuous = True,
                 continuous_embed_dim = 128*128*3,
             )
-            ckpt_trainer_path = f"/vol/bitbucket/pn222/models/{self.run_name}/models/64_128/ckpt_trainer_2_{best_epoch:03}.pt"        
+            ckpt_trainer_path = f"/vol/bitbucket/zr523/models/{self.run_name}/models/64_128/ckpt_trainer_2_{best_epoch:03}.pt"        
         
         trainer = ImagenTrainer(imagen, lr=3e-4, verbose=False).cuda()
         trainer.load(ckpt_trainer_path)  
@@ -247,7 +247,7 @@ class TPDiffModel:
                 condition_on_continuous = True,
                 continuous_embed_dim = 64*64*1,
             )
-            ckpt_trainer_path = f"/vol/bitbucket/pn222/models/{self.run_name}/models/64_PRP_woERA5/ckpt_trainer_1_{best_epoch:03}.pt"
+            ckpt_trainer_path = f"/vol/bitbucket/zr523/models/{self.run_name}/models/64_PRP_woERA5/ckpt_trainer_1_{best_epoch:03}.pt"
         else:            
             imagen = Imagen(
                 unets = unets,
@@ -257,7 +257,7 @@ class TPDiffModel:
                 condition_on_continuous = True,
                 continuous_embed_dim = 64*64*4,
             )
-            ckpt_trainer_path = f"/vol/bitbucket/pn222/models/{self.run_name}/models/64_PRP/ckpt_trainer_1_{best_epoch:03}.pt"        
+            ckpt_trainer_path = f"/vol/bitbucket/zr523/models/{self.run_name}/models/64_PRP/ckpt_trainer_1_{best_epoch:03}.pt"        
         
         trainer = ImagenTrainer(imagen, lr=3e-4, verbose=False).cuda()
         trainer.load(ckpt_trainer_path)  
@@ -301,7 +301,7 @@ class Cyclone:
         return f"{self.abbv_region}_{name}"
 
     def __init__(self, region, name):        
-        self.BASE_DIR = "/vol/bitbucket/pn222/satellite/metadata"
+        self.BASE_DIR = "/vol/bitbucket/zr523/satellite/metadata"
         self.filename = self._get_filename(region, name)
         with open(f"{self.BASE_DIR}/{self.filename}.metadata", 'rb') as metadata_file:
             self.metadata = pickle.load(metadata_file)

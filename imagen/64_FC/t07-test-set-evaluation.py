@@ -25,7 +25,7 @@ print = partial(print, flush=True)
 tqdm.__init__ = partialmethod(tqdm.__init__, disable=True)
 
 RUN_NAME = args.run_name
-BASE_DIR = f"/vol/bitbucket/pn222/models/{RUN_NAME}/models/64_FC/"
+BASE_DIR = f"/vol/bitbucket/zr523/models/{RUN_NAME}/models/64_FC/"
 
 print(f"Run name: {RUN_NAME}")
 
@@ -53,7 +53,7 @@ args = DDPMArgs()
 args.batch_size = 16
 args.image_size = 64 ; args.o_size = 64 ; args.n_size = 128 ;
 args.continuous_embed_dim = 64*64*4
-args.dataset_path = f"/vol/bitbucket/pn222/satellite/dataloader/{args.o_size}_FC"
+args.dataset_path = f"/vol/bitbucket/zr523/satellite/dataloader/{args.o_size}_FC"
 args.datalimit = False
 args.lr = 3e-4
 args.mode = "fc"
@@ -111,7 +111,7 @@ for idx in range(len(test_dataloader)):
     for key in metric_dict.keys():
         test_metric_dict[key].append(metric_dict[key])
 
-with open(f"/vol/bitbucket/pn222/models/{RUN_NAME}/metrics_test.pkl", "wb") as file:
+with open(f"/vol/bitbucket/zr523/models/{RUN_NAME}/metrics_test.pkl", "wb") as file:
     pickle.dump(test_metric_dict, file)
 
 print(f'Evaluation completed.')

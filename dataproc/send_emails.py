@@ -10,7 +10,7 @@ def send_txt_email(message_txt,
     # # Email configuration
     # from_email = "pritthijit.nath.ml@gmail.com"
     
-    # with open("/homes/pn222/Work/MSc_Project_pn222/dataproc/app.password", "r") as file:
+    # with open("/homes/zr523/Work/MSc_Project_zr523/dataproc/app.password", "r") as file:
     #     password = file.read()                
         
     # # Create a message object

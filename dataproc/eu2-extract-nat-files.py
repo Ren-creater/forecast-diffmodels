@@ -27,11 +27,11 @@ def extract_files_with_extension(zip_file_path, target_extension, extraction_pat
     except Exception as e:
         print(f"Error: {zip_file_path} - {e}")
 
-zip_files = glob.glob(f"/vol/bitbucket/pn222/satellite/msg/data/zip/{name}/*.zip")
+zip_files = glob.glob(f"/vol/bitbucket/zr523/satellite/msg/data/zip/{name}/*.zip")
 pool = Pool(cpu_count())
 zip_func = partial(extract_files_with_extension, 
                    target_extension = '.nat', 
-                   extraction_path = '/vol/bitbucket/pn222/satellite/msg/data/native/')
+                   extraction_path = '/vol/bitbucket/zr523/satellite/msg/data/native/')
 results = pool.map(zip_func, zip_files)
 pool.close()
 pool.join()
