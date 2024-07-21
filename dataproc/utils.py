@@ -474,7 +474,7 @@ class ModelDataLoader:
         idx = torch.tensor(list(range(size)))
         if self.shuffle: idx = torch.randperm(size)
         random_idx = idx.reshape(-1, batch_size)
-        if self.batch_shuffle:
+        if self.shuffle_batch:
             random_idx = random_idx[torch.randperm(size / batch_size)]
         self.random_idx = random_idx
 
