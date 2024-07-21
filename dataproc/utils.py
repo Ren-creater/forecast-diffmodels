@@ -12,8 +12,8 @@ from datetime import datetime, timedelta
 from pyproj import Proj
 
 import sys
-sys.path.append("/homes/zr523/Work/MSc_Project_zr523/imagen/imagen/")
-"/homes/zr523/Work/MSc_Project_zr523/imagen/imagen/"
+sys.path.append("/vol/bitbucket/zr523/research_project/forecast-diffmodelsimagen/imagen/")
+"/vol/bitbucket/zr523/research_project/forecast-diffmodelsimagen/imagen/"
 from imagen_pytorch import Unet, Imagen, ImagenTrainer, NullUnet
 
 abbv_to_region = {
