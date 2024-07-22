@@ -31,8 +31,8 @@ df = pd.read_excel(cyclones_path)
 df = df.drop('Unnamed: 8', axis=1)
 msg_df = df[df["Satellite Data"] == "EUMETSAT - Meteosat 9"]
 
-consumer_key = INSERT_CONSUMER_KEY
-consumer_secret = INSERT_CUSTOMER_SECRET
+consumer_key = "wkUQRoLpx1LeCrfjhZdNW9ak84Qa"
+consumer_secret = "HRd2XnXfffCrTfcOaBK6KlMrL_Ia"
 
 credentials = (consumer_key, consumer_secret)
 token = eumdac.AccessToken(credentials)
