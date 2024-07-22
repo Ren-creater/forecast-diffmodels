@@ -476,7 +476,7 @@ class ModelDataLoader:
         if self.shuffle: idx = torch.randperm(size)
         random_idx = idx.reshape(-1, batch_size)
         if self.shuffle_batch:
-            random_idx = random_idx[torch.randperm(size / batch_size)]
+            random_idx = random_idx[torch.randperm(int(size / batch_size))]
         self.random_idx = random_idx
 
 
