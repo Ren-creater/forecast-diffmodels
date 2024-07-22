@@ -101,6 +101,8 @@ def train(args):
         logging.info(f"Starting epoch {epoch}:")
         if args.shuffle_every_epoch:
             _ = len(train_dataloader) ; train_dataloader.create_batches(args.batch_size, False)
+        print(len(train_dataloader))
+        print(len(test_dataloader))
         pbar = tqdm(train_dataloader)
         # for i, (img_64, _, era5) in enumerate(pbar):
         #     cond_embeds = era5.reshape(era5.shape[0], -1).float().cuda()
