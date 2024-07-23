@@ -178,7 +178,7 @@ args.datalimit = False
 args.augment = True
 args.mode = "fc"
 args.shuffle_every_epoch = False
-args.region = region_to_abbv["North Indian Ocean"]
+args.region = region_to_abbv["Australia"]#"North Indian Ocean"]
 
 args.dataloaders = get_satellite_data(args)
 logging.info(f"Dataset loaded")
