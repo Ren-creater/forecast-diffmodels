@@ -43,8 +43,8 @@ cyclones_path = "./list_of_cyclones.xlsx"
 df = pd.read_excel(cyclones_path)
 df = df.drop('Unnamed: 8', axis=1)
 df = df.dropna()
-df = df[df["Name"] == "Bonnie"]
-#df = df[df["Name"] == "Genevieve"]
+# df = df[df["Name"] == "Bonnie"]
+# #df = df[df["Name"] == "Genevieve"]
 
 def is_stub_already_present(dest_folder, stub):
   stubs = [x.split('/')[-1] for x in glob.glob(dest_folder+"*.nc")]
