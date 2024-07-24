@@ -77,24 +77,24 @@ def download_insat3d(date, order_no, name, count=1):
         
 
 ORDER_NO_MAPPINGS = {
-    "Fani"  : "Jun23_086424",
-    "Bulbul": "Jun23_087006",
-    "Mocha" : "Jun23_086446",
-    "Asani" : "Jun23_086448",
-    "Yaas"  : "Jun23_086450",
-    "Nivar" : "Jun23_087004",
-    "Amphan": "Jun23_086454",
-    "Gulab - Shaheen"  : "Jun23_086472",
-    "Tauktae" : "Jun23_086474",
-    "Nisarga" : "Jun23_086476",
-    "Maha"    : "Jun23_086478",
-    "Kyarr"   : "Jun23_086480",
-    "Vayu"    : "Jun23_086482"
+    "Mocha" : "Jul2024_104927",
+    "Asani" : "Jul2024_104929",
+    "Yaas"  : "Jul2024_104931",
+    "Nivar" : "Jul2024_104933",
+    "Amphan": "Jul2024_104935",
+    "Bulbul": "Jul2024_104937",
+    "Fani"  : "Jul2024_104939",
+    "Gulab - Shaheen"  : "Jul2024_104941",
+    "Tauktae" : "Jul2024_104943",
+    "Nisarga" : "Jul2024_104945",
+    "Maha"    : "Jul2024_104947",
+    "Kyarr"   : "Jul2024_104949",
+    "Vayu"    : "Jul2024_104951"
 }
 
 hostname = 'download.mosdac.gov.in'
 port = 22
-username = 'ukp3jitnath'
+username = 'trajectory'
 password = 'Mosdac2@23'
 
 for name in ORDER_NO_MAPPINGS.keys():    
