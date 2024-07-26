@@ -44,11 +44,19 @@ def close_sftp_connection(sftp, transport):
     sftp.close()
     transport.close()
 
-def download_file_sftp(remote_path, local_path):
-    sftp, transport = fetch_sftp_connection(hostname, port, username, password)
-    sftp.get(remote_path, local_path)
-    close_sftp_connection(sftp, transport)
-    time.sleep(5)
+# def download_file_sftp(remote_path, local_path):
+#     sftp, transport = fetch_sftp_connection(hostname, port, username, password)
+#     sftp.get(remote_path, local_path)
+#     close_sftp_connection(sftp, transport)
+#     time.sleep(5)
+
+def move_file(source, destination):
+    try:
+        # Move the file from source to destination
+        shutil.move(source, destination)
+        print(f"File '{source}' moved to '{destination}' successfully.")
+    except Exception as e:
+        print(f"Error moving file: {e}")
 
 def is_stub_already_present(dest_folder, stub):
     stubs = [x.split('/')[-1] for x in glob.glob(dest_folder+"*.h5")]
@@ -61,14 +69,16 @@ def download_insat3d(date, order_no, name, count=1):
     year = date.year ; month = date.month ; day = date.day ; hour = date.hour ;
     
     stub = "3DIMG_" + f"{date.strftime('%d%b%Y_%H%M').upper()}" + "_L1B_STD_V01R00.h5"
-    remote_path = f"Order/{order_no}/{stub}"
+    source = f"/vol/bitbucket/zr523/research_project/Order/{order_no}/{stub}"
+    #remove_path = f"Order/{order_no}/{stub}"
     dest_folder = f"{BASE_DIR}/data/h5/{name.replace(' ', '').lower()}/{year}-{month:02}-{day:02}/" ; local_path  = f"{dest_folder}{stub}"
     os.makedirs(dest_folder, exist_ok=True)
     
     print(f'[{name}] - {date.strftime("%Y-%m-%d %H:%M")} - Downloading file ... ')
     try:
         if not is_stub_already_present(dest_folder, stub):
-            download_file_sftp(remote_path, local_path)
+            #download_file_sftp(remote_path, local_path)
+            move_file(source, local_path)
         print(f'[{name}] - {date.strftime("%Y-%m-%d %H:%M")} - Downloaded.')
     except Exception as e:
         subprocess.run(f"rm -rf {local_path}", shell=True)
