@@ -70,7 +70,7 @@ def download_insat3d(date, order_no, name, count=1):
     
     stub = "3DIMG_" + f"{date.strftime('%d%b%Y_%H%M').upper()}" + "_L1B_STD_V01R00.h5"
     #source = f"/vol/bitbucket/zr523/research_project/Order/{order_no}/{stub}"
-    remove_path = f"Order/{order_no}/{stub}"
+    remote_path = f"Order/{order_no}/{stub}"
     dest_folder = f"{BASE_DIR}/data/h5/{name.replace(' ', '').lower()}/{year}-{month:02}-{day:02}/" ; local_path  = f"{dest_folder}{stub}"
     os.makedirs(dest_folder, exist_ok=True)
     
