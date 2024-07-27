@@ -87,19 +87,19 @@ def download_insat3d(date, order_no, name, count=1):
         
 
 ORDER_NO_MAPPINGS = {
-    "Mocha" : "Jul2024_104927",
-    "Asani" : "Jul2024_104929",
-    "Yaas"  : "Jul2024_104931",
-    "Nivar" : "Jul2024_104933",
-    "Amphan": "Jul2024_104935",
-    "Bulbul": "Jul2024_104937",
-    "Fani"  : "Jul2024_104939",
-    "Gulab - Shaheen"  : "Jul2024_104941",
-    "Tauktae" : "Jul2024_104943",
-    "Nisarga" : "Jul2024_104945",
-    "Maha"    : "Jul2024_104947",
-    "Kyarr"   : "Jul2024_104949",
-    "Vayu"    : "Jul2024_104951"
+    "Mocha" : "Jul24_104927",
+    "Asani" : "Jul24_104929",
+    "Yaas"  : "Jul24_104931",
+    "Nivar" : "Jul24_104933",
+    "Amphan": "Jul24_104935",
+    "Bulbul": "Jul24_104937",
+    "Fani"  : "Jul24_104939",
+    "Gulab - Shaheen"  : "Jul24_104941",
+    "Tauktae" : "Jul24_104943",
+    "Nisarga" : "Jul24_104945",
+    "Maha"    : "Jul24_104947",
+    "Kyarr"   : "Jul24_104949",
+    "Vayu"    : "Jul24_104951"
 }
 
 hostname = 'download.mosdac.gov.in'
