@@ -11,7 +11,7 @@ import sys
 sys.stdout = open(f'EU_EXTRACT_LOG_{datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")}.log','wt')
 
 name = "*"
-extracted_paths = glob.glob(f"/vol/bitbucket/zr523/research_project/satellite/msg/data/native/{name}/*.nat")
+extracted_paths = glob.glob(f"/vol/bitbucket/zr523/researchProject/satellite/msg/data/native/{name}/*.nat")
 
 def extract_files_with_extension(zip_file_path, target_extension, extraction_path):
     name = zip_file_path.split("/")[-2]
@@ -27,11 +27,11 @@ def extract_files_with_extension(zip_file_path, target_extension, extraction_pat
     except Exception as e:
         print(f"Error: {zip_file_path} - {e}")
 
-zip_files = glob.glob(f"/vol/bitbucket/zr523/research_project/satellite/msg/data/zip/{name}/*.zip")
+zip_files = glob.glob(f"/vol/bitbucket/zr523/researchProject/satellite/msg/data/zip/{name}/*.zip")
 pool = Pool(cpu_count())
 zip_func = partial(extract_files_with_extension, 
                    target_extension = '.nat', 
-                   extraction_path = '/vol/bitbucket/zr523/research_project/satellite/msg/data/native/')
+                   extraction_path = '/vol/bitbucket/zr523/researchProject/satellite/msg/data/native/')
 results = pool.map(zip_func, zip_files)
 pool.close()
 pool.join()

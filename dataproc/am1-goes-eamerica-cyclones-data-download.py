@@ -21,12 +21,13 @@ warnings.filterwarnings("ignore")
 
 sys.stdout = open(f'AME_LOG_{datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")}.log','wt')
 
-BASE_DIR = "/vol/bitbucket/zr523/research_project/satellite/goes_east"
+BASE_DIR = "/vol/bitbucket/zr523/researchProject/satellite/goes_east"
 
 cyclones_path = "./list_of_cyclones.xlsx"
 df = pd.read_excel(cyclones_path)
 df = df.drop('Unnamed: 8', axis=1)
-goes_east_df = df[df["Name"] == "Bonnie"]
+#goes_east_df = df[df["Name"] == "Bonnie"]
+goes_east_df = df[df["Satellite Data"] == "NOAA - GOES East"]
 
 import subprocess
 

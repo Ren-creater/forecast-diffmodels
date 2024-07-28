@@ -10,7 +10,7 @@ def send_txt_email(message_txt,
     # # Email configuration
     # from_email = "pritthijit.nath.ml@gmail.com"
     
-    # with open("/vol/bitbucket/zr523/research_project/forecast-diffmodels/dataproc/app.password", "r") as file:
+    # with open("/vol/bitbucket/zr523/researchProject/forecast-diffmodels/dataproc/app.password", "r") as file:
     #     password = file.read()                
         
     # # Create a message object

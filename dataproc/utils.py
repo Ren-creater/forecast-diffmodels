@@ -12,8 +12,8 @@ from datetime import datetime, timedelta
 from pyproj import Proj
 
 import sys
-sys.path.append("/vol/bitbucket/zr523/research_project/forecast-diffmodelsimagen/imagen/")
-"/vol/bitbucket/zr523/research_project/forecast-diffmodelsimagen/imagen/"
+sys.path.append("/vol/bitbucket/zr523/researchProject/forecast-diffmodelsimagen/imagen/")
+"/vol/bitbucket/zr523/researchProject/forecast-diffmodelsimagen/imagen/"
 from imagen_pytorch import Unet, Imagen, ImagenTrainer, NullUnet
 
 abbv_to_region = {
@@ -301,7 +301,7 @@ class Cyclone:
         return f"{self.abbv_region}_{name}"
 
     def __init__(self, region, name):        
-        self.BASE_DIR = "/vol/bitbucket/zr523/research_project/satellite/metadata"
+        self.BASE_DIR = "/vol/bitbucket/zr523/researchProject/satellite/metadata"
         self.filename = self._get_filename(region, name)
         with open(f"{self.BASE_DIR}/{self.filename}.metadata", 'rb') as metadata_file:
             self.metadata = pickle.load(metadata_file)

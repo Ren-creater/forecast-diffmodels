@@ -50,7 +50,7 @@ args = DDPMArgs()
 args.batch_size = 16
 args.image_size = 64 ; args.o_size = 64 ; args.n_size = 128 ;
 args.continuous_embed_dim = 64*64*4
-args.dataset_path = f"/vol/bitbucket/zr523/research_project/satellite/dataloader/{args.o_size}_FC"
+args.dataset_path = f"/vol/bitbucket/zr523/researchProject/satellite/dataloader/{args.o_size}_FC"
 args.datalimit = False
 args.mode = "fc"
 args.lr = float(RUN_NAME.split('_')[-1])

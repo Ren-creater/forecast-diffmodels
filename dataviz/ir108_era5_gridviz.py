@@ -48,7 +48,7 @@ abbvs = {
 
 def get_satmaps(region, name):
     
-    ERA5_BASE_DIR = "/vol/bitbucket/zr523/research_project/satellite/era5"
+    ERA5_BASE_DIR = "/vol/bitbucket/zr523/researchProject/satellite/era5"
     
     if region == "nio":
         map_x0, map_y0 = 78.662109, 20.344627 ; hs_length = 20
@@ -91,7 +91,7 @@ def get_satmaps(region, name):
     satmaps["satmaps"] = []
     
     if region == "nio":
-        IR108_BASE_DIR = "/vol/bitbucket/zr523/research_project/satellite/mosdac"
+        IR108_BASE_DIR = "/vol/bitbucket/zr523/researchProject/satellite/mosdac"
         h5_files = sorted(glob.glob(f"{IR108_BASE_DIR}/data/h5/{name}/*/*.h5"))
         for idx in range(0, len(h5_files), SKIP_FRAMES):
             h5_file = h5_files[idx]
@@ -101,7 +101,7 @@ def get_satmaps(region, name):
             satmaps["satmaps"].append({"date": date, "ir108_fn": h5_file}) 
 
     if region in ["aus", "wpo"]:
-        IR108_BASE_DIR = "/vol/bitbucket/zr523/research_project/satellite/himawari"
+        IR108_BASE_DIR = "/vol/bitbucket/zr523/researchProject/satellite/himawari"
         hr_dirs = sorted(glob.glob(f"{IR108_BASE_DIR}/data/bz2/{name}/*/*"))
         for idx in range(0, len(hr_dirs), SKIP_FRAMES):
             hr_dir = hr_dirs[idx]
@@ -111,7 +111,7 @@ def get_satmaps(region, name):
                 satmaps["satmaps"].append({"date": date, "ir108_fn": hr_dir})  
 
     if region == "wio":
-        IR108_BASE_DIR = "/vol/bitbucket/zr523/research_project/satellite/msg"
+        IR108_BASE_DIR = "/vol/bitbucket/zr523/researchProject/satellite/msg"
         nat_files = sorted(glob.glob(f"{IR108_BASE_DIR}/data/native/{name}/*.nat"))
         for idx in range(0, len(nat_files), SKIP_FRAMES):
             nat_file = nat_files[idx]
@@ -120,7 +120,7 @@ def get_satmaps(region, name):
             satmaps["satmaps"].append({"date": date, "ir108_fn": nat_file})  
 
     if region == "use":
-        IR108_BASE_DIR = "/vol/bitbucket/zr523/research_project/satellite/goes_east"
+        IR108_BASE_DIR = "/vol/bitbucket/zr523/researchProject/satellite/goes_east"
         nc_files = sorted(glob.glob(f"{IR108_BASE_DIR}/data/nc/{name}/*/*.nc"))
         for idx in range(0, len(nc_files), SKIP_FRAMES):
             nc_file = nc_files[idx]
@@ -131,7 +131,7 @@ def get_satmaps(region, name):
             satmaps["satmaps"].append({"date": date, "ir108_fn": nc_file})  
 
     if region == "usw":
-        IR108_BASE_DIR = "/vol/bitbucket/zr523/research_project/satellite/goes_west"
+        IR108_BASE_DIR = "/vol/bitbucket/zr523/researchProject/satellite/goes_west"
         nc_files = sorted(glob.glob(f"{IR108_BASE_DIR}/data/nc/{name}/*/*.nc"))
         for idx in range(0, len(nc_files), SKIP_FRAMES):
             nc_file = nc_files[idx]
@@ -270,16 +270,16 @@ args = parser.parse_args()
 region = args.region
     
 if region == "nio":  
-    # names = sorted([x.split('/')[-1] for x in glob.glob("/vol/bitbucket/zr523/research_project/satellite/mosdac/data/h5/*")])
+    # names = sorted([x.split('/')[-1] for x in glob.glob("/vol/bitbucket/zr523/researchProject/satellite/mosdac/data/h5/*")])
     names = ["gulab-shaheen"]
 if region == "aus":
     names = ["ilsa", "seroja", "niran", "damien", "ferdinand", "veronica"]
 if region == "wio":
-    names = sorted([x.split('/')[-1] for x in glob.glob("/vol/bitbucket/zr523/research_project/satellite/msg/data/native/*")])
+    names = sorted([x.split('/')[-1] for x in glob.glob("/vol/bitbucket/zr523/researchProject/satellite/msg/data/native/*")])
 if region == "use":
-    names = sorted([x.split('/')[-1] for x in glob.glob("/vol/bitbucket/zr523/research_project/satellite/goes_east/data/nc/*")])
+    names = sorted([x.split('/')[-1] for x in glob.glob("/vol/bitbucket/zr523/researchProject/satellite/goes_east/data/nc/*")])
 if region == "usw":
-    names = sorted([x.split('/')[-1] for x in glob.glob("/vol/bitbucket/zr523/research_project/satellite/goes_west/data/nc/*")])
+    names = sorted([x.split('/')[-1] for x in glob.glob("/vol/bitbucket/zr523/researchProject/satellite/goes_west/data/nc/*")])
 if region == "wpo":
     names = ["noru", "vamco", "rai", "molave", "nesat", "nanmadol",  "chanthu", "goni", "in-fa"]
 
