@@ -111,7 +111,7 @@ WGEO_WBOX = (-180, -90, 0, 90)
 bboxes = {
     'North Indian Ocean': (get_nbox_from_wbox(INSAT_WBOX), "NIO"),
     'Australia': (get_nbox_from_wbox(EGEO_WBOX), "AUS"),
-    'South West Indian Ocean': (get_nbox_from_wbox(MSG_WBOX), "SWIO"),
+    'West Indian Ocean': (get_nbox_from_wbox(MSG_WBOX), "SWIO"),
     'North Atlantic Ocean': (get_nbox_from_wbox(GOES_EAST_WBOX), "USE"),
     'North Pacific Ocean': (get_nbox_from_wbox(WGEO_WBOX), "USW"),
     'West Pacific Ocean': (get_nbox_from_wbox(EGEO_WBOX), "PHI")
