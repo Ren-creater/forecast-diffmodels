@@ -45,6 +45,7 @@ df = df.drop('Unnamed: 8', axis=1)
 df = df.dropna()
 # df = df[df["Name"] == "Bonnie"]
 # #df = df[df["Name"] == "Genevieve"]
+df = df[df["Name"] == "Freddy"]
 
 def is_stub_already_present(dest_folder, stub):
   stubs = [x.split('/')[-1] for x in glob.glob(dest_folder+"*.nc")]
