@@ -11,7 +11,7 @@ from tqdm import tqdm
 from utils import *
 from send_emails import send_txt_email
 
-BASE_DIR = "/vol/bitbucket/zr523/researchProject/satellite/dataloader/64_FC/"
+BASE_DIR = "/vol/bitbucket/zr523/research_project/satellite/dataloader/64_FC/"
 
 import sys
 sys.stdout = open(f'DL_FC_LOG_{datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")}.log','wt')
@@ -75,7 +75,8 @@ def fetch_cyclone(idx):
         img = skimage.transform.resize(img, (o_size, o_size), anti_aliasing=True)
         img = torch.from_numpy(img).unsqueeze(0)
         
-        era5 = torch.cat([img, era5]).unsqueeze(0)
+        #commented out below for video
+        #era5 = torch.cat([img, era5]).unsqueeze(0)
                
         if torch.isnan(img_o.sum()) or torch.isnan(img_n.sum()) or torch.isnan(era5.sum()):
             print(f"[NAN]\t{region}\t{name}\t{satmap_idx}", flush=True)
