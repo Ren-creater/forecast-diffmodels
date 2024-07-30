@@ -31,7 +31,7 @@ cyclones_path = "./list_of_cyclones.xlsx"
 df = pd.read_excel(cyclones_path)
 df = df.drop('Unnamed: 8', axis=1)
 #insat_df = df[df["Satellite Data"] == "ISRO - INSAT"]
-insat_df = df[df["Name"] == "Bulbul" | df["Name"] == "Nivar"]
+insat_df = df[df["Name"].isin(["Bulbul", "Nivar"])]
 
 def fetch_sftp_connection(hostname, port, username, password):
     sock = socket.socket(socket.AF_INET)
