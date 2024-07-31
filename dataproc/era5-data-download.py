@@ -121,6 +121,8 @@ bboxes = {
 for idx in range(len(df)):
     row = df.iloc[idx]       
     name = row["Name"]
+    if name != "Bulbul":
+        continue
     
     start_date = datetime.datetime.strptime(row["Form Date"], "%d-%m-%Y")
     end_date = datetime.datetime.strptime(row["Dissipated Date"], "%d-%m-%Y")
