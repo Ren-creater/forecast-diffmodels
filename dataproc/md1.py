@@ -110,10 +110,10 @@ def get_satmaps(region, name):
             satmaps["satmaps"].append({"date": date, "ir108_fn": nc_file})   
     
     hrs = np.array([np64_to_datetime(x.values) for x in mc_era5["time"]])
-    print(era5_nc_files)
-    print(mc_era5["time"])
-    print(hrs)
-    print(satmaps["satmaps"])
+    #print(era5_nc_files)
+    #print(mc_era5["time"])
+    #print(hrs)
+    #print(satmaps["satmaps"])
     for idx in range(len(satmaps["satmaps"])):
         try:
             era5_idx = np.where(hrs == satmaps["satmaps"][idx]["date"])[0][0]
