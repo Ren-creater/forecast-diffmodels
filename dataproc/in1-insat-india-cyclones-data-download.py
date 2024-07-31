@@ -31,7 +31,6 @@ cyclones_path = "./list_of_cyclones.xlsx"
 df = pd.read_excel(cyclones_path)
 df = df.drop('Unnamed: 8', axis=1)
 insat_df = df[df["Satellite Data"] == "ISRO - INSAT"]
-df = df[df["Name"] == "Nivar"]
 
 def fetch_sftp_connection(hostname, port, username, password):
     sock = socket.socket(socket.AF_INET)
@@ -109,6 +108,8 @@ username = 'trajectory'
 password = 'Mosdac2@23'
 
 for name in ORDER_NO_MAPPINGS.keys():  
+    if name != "Nivar":
+        continue  
     row = df.loc[df["Name"] == name].squeeze()
     order_no = ORDER_NO_MAPPINGS[name]
     start_date = datetime.datetime.strptime(row["Form Date"], "%d-%m-%Y")
