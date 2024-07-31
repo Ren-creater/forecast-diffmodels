@@ -121,6 +121,7 @@ bboxes = {
 for idx in range(len(df)):
     row = df.iloc[idx]       
     name = row["Name"]
+    print(name)
     if name != "Bulbul":
         continue
     
