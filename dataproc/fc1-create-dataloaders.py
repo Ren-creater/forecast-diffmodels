@@ -77,6 +77,8 @@ def fetch_cyclone(idx):
         
         #commented out below for video
         #era5 = torch.cat([img, era5]).unsqueeze(0)
+        #added below for video
+        era5 = era5.unsqueeze(0)
                
         if torch.isnan(img_o.sum()) or torch.isnan(img_n.sum()) or torch.isnan(era5.sum()):
             print(f"[NAN]\t{region}\t{name}\t{satmap_idx}", flush=True)
