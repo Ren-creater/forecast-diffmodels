@@ -108,7 +108,7 @@ username = 'trajectory'
 password = 'Mosdac2@23'
 
 for name in ORDER_NO_MAPPINGS.keys():  
-    if name != "Nivar":
+    if name != "Bulbul":
         continue  
     row = df.loc[df["Name"] == name].squeeze()
     order_no = ORDER_NO_MAPPINGS[name]
