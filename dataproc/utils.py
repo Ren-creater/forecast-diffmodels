@@ -363,8 +363,9 @@ class CycloneDataLoader:
             self.img_64  = torch.empty((0, 64, 64), 
                                    dtype=torch.float32)
             self.img_128 = torch.empty((0, 128, 128), 
-                                    dtype=torch.float32)            
-            self.era5 = torch.empty((0, 4, 64, 64), 
+                                    dtype=torch.float32)
+            # changed 4 to 3 below            
+            self.era5 = torch.empty((0, 3, 64, 64), 
                                     dtype=torch.float32)
 
     
