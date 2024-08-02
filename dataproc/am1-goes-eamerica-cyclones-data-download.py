@@ -26,8 +26,8 @@ BASE_DIR = "/vol/bitbucket/zr523/researchProject/satellite/goes_east"
 cyclones_path = "./list_of_cyclones.xlsx"
 df = pd.read_excel(cyclones_path)
 df = df.drop('Unnamed: 8', axis=1)
-#goes_east_df = df[df["Name"] == "Bonnie"]
-goes_east_df = df[df["Satellite Data"] == "NOAA - GOES East"]
+goes_east_df = df[df["Name"] == "Bonnie"]
+#goes_east_df = df[df["Satellite Data"] == "NOAA - GOES East"]
 
 import subprocess
 
