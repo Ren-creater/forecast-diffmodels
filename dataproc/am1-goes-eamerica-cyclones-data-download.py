@@ -60,7 +60,8 @@ def download_goes_east_b13(date, name):
     os.makedirs(dest_folder, exist_ok=True)
 
     print(f'[{name}] - {date.strftime("%Y-%m-%d %H:%M")} - Downloading file ... ')
-    if name != "bonnie" and not is_stub_already_present(dest_folder, stub):
+    #if not is_stub_already_present(dest_folder, stub):
+    if True:#temporarily for downloading bonnie
         fetch_aws_file(year, month, day_no, hour, stub, dest_folder)
     print(f'[{name}] - {date.strftime("%Y-%m-%d %H:%M")} - Downloaded.')
 
