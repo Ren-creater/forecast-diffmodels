@@ -82,6 +82,9 @@ def fetch_cyclone(idx):
                
         if torch.isnan(img_o.sum()) or torch.isnan(img_n.sum()) or torch.isnan(era5.sum()):
             print(f"[NAN]\t{region}\t{name}\t{satmap_idx}", flush=True)
+            print(f"img_o: {torch.isnan(img_o.sum())}")
+            print(f"img_n: {torch.isnan(img_n.sum())}")
+            print(f"era5: {torch.isnan(era5.sum())}")
             continue
         
         data_loader.add_image(img_o, img_n, era5)
