@@ -54,8 +54,8 @@ def download_himawara_b13(date, name):
     
     print(f'[{name}] - {date.strftime("%Y-%m-%d %H:%M")} - Downloading files ... ')
     for stub in filenames:
-        if not is_stub_already_present(dest_folder, stub):
-          fetch_aws_file(year, month, day, hour, stub, dest_folder)
+        #if not is_stub_already_present(dest_folder, stub):
+        fetch_aws_file(year, month, day, hour, stub, dest_folder)
     print(f'[{name}] - {date.strftime("%Y-%m-%d %H:%M")} - Downloaded.')
 
 for idx in range(len(himawari_df)):
