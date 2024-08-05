@@ -45,7 +45,7 @@ df = df.drop('Unnamed: 8', axis=1)
 df = df.dropna()
 # df = df[df["Name"] == "Bonnie"]
 # #df = df[df["Name"] == "Genevieve"]
-df = df[df["Name"] == "Bulbul"]
+#df = df[df["Name"] == "Bulbul"]
 
 def is_stub_already_present(dest_folder, stub):
   stubs = [x.split('/')[-1] for x in glob.glob(dest_folder+"*.nc")]
@@ -88,8 +88,8 @@ def download_era5(date, name, nbox, abbv):
 
     print(f'[{name}] - {date.strftime("%Y-%m-%d")} - Downloading file ... ')
     try:
-        if not is_stub_already_present(dest_folder, stub):
-            fetch_era5_data(date, nbox, local_path)
+        #if not is_stub_already_present(dest_folder, stub):
+        fetch_era5_data(date, nbox, local_path)
         print(f'[{name}] - {date.strftime("%Y-%m-%d")} - Downloaded.')
     except Exception as e:
         subprocess.run(f"rm -rf {local_path}", shell=True)
@@ -121,6 +121,10 @@ bboxes = {
 for idx in range(len(df)):
     row = df.iloc[idx]       
     name = row["Name"]
+
+    #skip
+    if name != "bonnie" and row["Region"] != "aus":
+        continue
     
     start_date = datetime.datetime.strptime(row["Form Date"], "%d-%m-%Y")
     end_date = datetime.datetime.strptime(row["Dissipated Date"], "%d-%m-%Y")
