@@ -26,7 +26,8 @@ BASE_DIR = "/vol/bitbucket/zr523/researchProject/satellite/himawari"
 cyclones_path = "./list_of_cyclones.xlsx"
 df = pd.read_excel(cyclones_path)
 df = df.drop('Unnamed: 8', axis=1)
-himawari_df = df[df["Name"] == "Ilsa"]
+himawari_df = df[df["Satellite Data"] == "JMA - Himawari 8/9"]
+#himawari_df = df[df["Name"] == "Ilsa"]
 
 def is_stub_already_present(dest_folder, stub):
     stubs = [x.split('/')[-1] for x in glob.glob(dest_folder+"*.bz2")]
