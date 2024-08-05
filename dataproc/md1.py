@@ -120,6 +120,7 @@ def get_satmaps(region, name):
             satmaps["satmaps"][idx]["era5_idx"] = era5_idx
         except Exception as e:            
             print(f"[{name.upper()}]: Processing error at {satmaps['satmaps'][idx]['date']}")
+            print(e)
             del satmaps["satmaps"][idx]
 
     satmaps["count"] = len(satmaps["satmaps"])
