@@ -123,7 +123,7 @@ for idx in range(len(df)):
     name = row["Name"]
 
     #skip
-    if name != "bonnie" and row["Region"] != "aus":
+    if name != "Bonnie" and row["Region"] != "Australia":
         continue
     
     start_date = datetime.datetime.strptime(row["Form Date"], "%d-%m-%Y")
