@@ -406,7 +406,8 @@ class ModelDataLoader:
                                    dtype=torch.float32)
             self.img_n = torch.empty((0, n_size, n_size), 
                                     dtype=torch.float32)
-            self.era5 = torch.empty((0, 4, o_size, o_size), 
+            # changed 4 to 3 below
+            self.era5 = torch.empty((0, 3, o_size, o_size), 
                                     dtype=torch.float32)
             
         self.new_data = True
