@@ -42,8 +42,8 @@ def fetch_cyclone(idx):
     name = name.replace(' ', '').lower()
     filename = f"{region}_{name}.dat"
     
-    #if name != "bonnie" and region != "aus" and is_stub_already_present(BASE_DIR, filename):
-    #    return
+    if name != "bonnie" and region != "aus" and is_stub_already_present(BASE_DIR, filename):
+        return
     
     print(f"[{name.upper()}] Processing dataloader.", flush=True)
     
