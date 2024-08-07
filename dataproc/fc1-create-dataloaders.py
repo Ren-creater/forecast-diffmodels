@@ -56,7 +56,11 @@ def fetch_cyclone(idx):
         
         ir108_fn = cyclone.metadata['satmaps'][cur_satmap_idx]['ir108_fn']
         ir108_scn = cyclone.get_ir108_data(ir108_fn)    
-        img = ir108_scn.to_numpy() ; 
+        img = ir108_scn.to_numpy() ;
+
+        # Replace NaN values with 0
+        img = np.nan_to_num(img, nan=0.0)
+
         img = transform_make_sq_image(img)    
           
         img_o = skimage.transform.resize(img, (o_size, o_size), anti_aliasing=True)
