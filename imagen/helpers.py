@@ -113,6 +113,7 @@ def get_satellite_data(args):
     for fn in tqdm(c_dataloader_fns):
         with open(fn, "rb") as file: 
             region, name = fn.split('/')[-1][:-4].split('_')
+            print(name)
             if name in test_set[region]:
                 test_dataloader.add_dataloader(pickle.load(file))
             else:
