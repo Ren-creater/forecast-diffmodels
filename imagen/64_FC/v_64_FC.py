@@ -120,7 +120,7 @@ def train(args):
             cond_embeds = era5.reshape(1, -1).float().cuda()                        
             vid_64 = rearrange(img_64, 'b c h w -> 1 c b h w')
 
-            loss = trainer(videos=vid_64,
+            loss = trainer(vid_64,
                            continuous_embeds=cond_embeds,
                            unet_number=k,
                            ignore_time=False)
