@@ -6,4 +6,6 @@ module load anaconda3/personal
 
 source activate research_env
 
+python3 -m pip install $HOME/researchProject/forecast-diffmodels/imagen/requirements.txt
+
 python $HOME/researchProject/forecast-diffmodels/imagen/64_FC/v_64_FC.py -mode execute -epochs 261
