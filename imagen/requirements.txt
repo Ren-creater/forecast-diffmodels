@@ -140,3 +140,4 @@ Werkzeug==2.2.3
 y-py==0.5.9
 ypy-websocket==0.8.2
 pixelmatch
+einops
