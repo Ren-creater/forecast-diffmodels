@@ -141,6 +141,7 @@ y-py==0.5.9
 ypy-websocket==0.8.2
 pixelmatch
 einops
+torchmetrics
 xarray
 satpy
 fsspec
