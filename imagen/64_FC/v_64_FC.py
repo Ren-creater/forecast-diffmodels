@@ -19,7 +19,7 @@ from torch.utils.tensorboard import SummaryWriter
 from einops import rearrange
 
 RUN_NAME = "64_FC"
-BASE_DIR = f"$HOME/researchProject/models/{RUN_NAME}"
+BASE_DIR = f"/rds/general/user/zr523/home/researchProject/models/{RUN_NAME}"
 
 os.makedirs(BASE_DIR, exist_ok=True)
 logging.basicConfig(format="%(asctime)s - %(levelname)s: %(message)s", 
