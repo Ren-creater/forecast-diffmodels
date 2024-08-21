@@ -171,7 +171,7 @@ args.batch_size = 16
 args.image_size = 64 ; args.o_size = 64 ; args.n_size = 128 ;
 #changed from 4 to 3 below, and * args.batch_size
 args.continuous_embed_dim = 64*64*3*args.batch_size
-args.dataset_path = f"$TMPDIR/satellite/dataloader/{args.o_size}_FC"
+args.dataset_path = f"/rds/general/ephemeral/user/zr523/ephemeral/satellite/dataloader/{args.o_size}_FC"
 args.device = "cuda"
 args.lr = 3e-4
 args.sample = True
