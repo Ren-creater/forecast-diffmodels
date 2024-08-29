@@ -167,7 +167,7 @@ class DDPMArgs:
 args = DDPMArgs()
 args.run_name = RUN_NAME
 args.epochs = int(cmd_args.epochs)
-args.batch_size = 16
+args.batch_size = 8
 args.image_size = 64 ; args.o_size = 64 ; args.n_size = 128 ;
 #changed from 4 to 3 below, and * args.batch_size
 args.continuous_embed_dim = 64*64*3*args.batch_size
@@ -184,6 +184,16 @@ args.region = region_to_abbv["Australia"]#"North Indian Ocean"]
 args.dataloaders = get_satellite_data(args)
 logging.info(f"Dataset loaded")
 
+def get_n_params(model):
+    pp=0
+    for p in list(model.parameters()):
+        nn=1
+        for s in list(p.size()):
+            nn = nn*s
+        pp += nn
+    return pp
+
+print(get_n_params(unets[0]))
 imagen = Imagen(
     unets = unets,
     image_sizes = (64),
