@@ -159,7 +159,7 @@ def train(args):
             
             ema_sampled_images = rearrange(ema_sampled_vid, 'b c h w -> 1 c b h w')
 
-            for i in ema_sampled_images.shape[0]:
+            for i in range(ema_sampled_images.shape[0]):
                 save_images_v2(test_dataloader, img_64, ema_sampled_images[i], os.path.join(f"{BASE_DIR}/results", args.run_name, f"{epoch}_{i}_ema.jpg"))
             logging.info(f"Completed sampling for epoch {epoch}.")
                 
