@@ -148,15 +148,19 @@ def train(args):
             random_batch = test_dataloader.random_idx[random_batch_idx][0]
             img_64, _, era5 = test_dataloader.get_batch(random_batch)
             
-            cond_embeds = era5.reshape(era5.shape[0], -1).float().cuda()
-            ema_sampled_images = imagen.sample(
-                        batch_size = img_64.shape[0],          
+            cond_embeds = era5.reshape(1, -1).float().cuda()
+            ema_sampled_vid = imagen.sample(
+                        batch_size = 1,#img_64.shape[0],          
                         cond_scale = 3.,
                         continuous_embeds=cond_embeds,
                         use_tqdm = False,
                         video_frames = 8
                 )
-            save_images_v2(test_dataloader, img_64, ema_sampled_images, os.path.join(f"{BASE_DIR}/results", args.run_name, f"{epoch}_ema.jpg"))
+            
+            ema_sampled_images = rearrange(ema_sampled_vid, 'b c h w -> 1 c b h w')
+
+            for i in ema_sampled_images.shape[0]:
+                save_images_v2(test_dataloader, img_64, ema_sampled_images[i], os.path.join(f"{BASE_DIR}/results", args.run_name, f"{epoch}_{i}_ema.jpg"))
             logging.info(f"Completed sampling for epoch {epoch}.")
                 
 import argparse
