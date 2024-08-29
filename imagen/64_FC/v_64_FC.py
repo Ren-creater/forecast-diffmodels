@@ -153,7 +153,8 @@ def train(args):
                         batch_size = img_64.shape[0],          
                         cond_scale = 3.,
                         continuous_embeds=cond_embeds,
-                        use_tqdm = False
+                        use_tqdm = False,
+                        video_frames = 8
                 )
             save_images_v2(test_dataloader, img_64, ema_sampled_images, os.path.join(f"{BASE_DIR}/results", args.run_name, f"{epoch}_ema.jpg"))
             logging.info(f"Completed sampling for epoch {epoch}.")
