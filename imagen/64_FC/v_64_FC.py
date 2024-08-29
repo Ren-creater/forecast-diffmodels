@@ -156,8 +156,8 @@ def train(args):
                         use_tqdm = False,
                         video_frames = 8
                 )
-            
-            ema_sampled_images = rearrange(ema_sampled_vid, 'b c h w -> 1 c b h w')
+            ema_sampled_vid = ema_sampled_vid.squeeze(0)
+            ema_sampled_images = rearrange(ema_sampled_vid, 'c t h w -> t c h w')
 
             for i in range(ema_sampled_images.shape[0]):
                 save_images_v2(test_dataloader, img_64, ema_sampled_images[i], os.path.join(f"{BASE_DIR}/results", args.run_name, f"{epoch}_{i}_ema.jpg"))
