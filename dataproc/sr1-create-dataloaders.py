@@ -11,7 +11,7 @@ from tqdm import tqdm
 from utils import *
 from send_emails import send_txt_email
 
-BASE_DIR = "/vol/bitbucket/zr523/researchProject/satellite/dataloader/64_128/"
+BASE_DIR = "/rds/general/user/zr523/home/researchProject/satellite/dataloader/64_128/"
 
 import sys
 sys.stdout = open(f'DL_LOG_{datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")}.log','wt')

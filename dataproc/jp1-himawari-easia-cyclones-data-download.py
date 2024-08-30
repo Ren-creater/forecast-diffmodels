@@ -21,7 +21,7 @@ warnings.filterwarnings("ignore")
 
 sys.stdout = open(f'JP_LOG_{datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")}.log','wt')
 
-BASE_DIR = "/vol/bitbucket/zr523/researchProject/satellite/himawari"
+BASE_DIR = "/rds/general/user/zr523/home/researchProject/satellite/himawari"
 
 cyclones_path = "./list_of_cyclones.xlsx"
 df = pd.read_excel(cyclones_path)

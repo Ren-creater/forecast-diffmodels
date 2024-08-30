@@ -198,7 +198,7 @@ def get_n_params(model):
         pp += nn
     return pp
 
-print(get_n_params(unets[0]))
+print(f"number of parameters: {get_n_params(unets[0])}")
 imagen = Imagen(
     unets = unets,
     image_sizes = (64),

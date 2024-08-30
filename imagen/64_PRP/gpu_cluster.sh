@@ -3,4 +3,4 @@
 #SBATCH --partition=gpgpuB
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=pritthijit.nath.ml@gmail.com
-/vol/bitbucket/zr523/venv/bin/python /vol/bitbucket/zr523/researchProject/forecast-diffmodels/imagen/64_PRP/m01_64_PRP.py -mode execute -epochs 261
+/rds/general/user/zr523/home/venv/bin/python /rds/general/user/zr523/home/researchProject/forecast-diffmodels/imagen/64_PRP/m01_64_PRP.py -mode execute -epochs 261

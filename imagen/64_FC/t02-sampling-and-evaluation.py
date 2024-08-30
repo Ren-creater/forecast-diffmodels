@@ -25,7 +25,7 @@ print = partial(print, flush=True)
 tqdm.__init__ = partialmethod(tqdm.__init__, disable=True)
 
 RUN_NAME = args.run_name
-BASE_DIR = f"/vol/bitbucket/zr523/models/{RUN_NAME}/models/64_FC/"
+BASE_DIR = f"/rds/general/user/zr523/home/researchProject/models/{RUN_NAME}/models/64_FC/"
 
 print(f"Run name: {RUN_NAME}")
 
@@ -50,7 +50,7 @@ args = DDPMArgs()
 args.batch_size = 16
 args.image_size = 64 ; args.o_size = 64 ; args.n_size = 128 ;
 args.continuous_embed_dim = 64*64*4
-args.dataset_path = f"/vol/bitbucket/zr523/researchProject/satellite/dataloader/{args.o_size}_FC"
+args.dataset_path = f"/rds/general/user/zr523/home/researchProject/satellite/dataloader/{args.o_size}_FC"
 args.datalimit = False
 args.mode = "fc"
 args.lr = float(RUN_NAME.split('_')[-1])
@@ -115,7 +115,7 @@ for idx in range(len(ckpt_trainer_files)):
         for key in metric_dict.keys():
             train_test_metric_dict[mode][key].append(metric_dict[key])
 
-with open(f"/vol/bitbucket/zr523/models/{RUN_NAME}/metrics.pkl", "wb") as file:
+with open(f"/rds/general/user/zr523/home/researchProject/models/{RUN_NAME}/metrics.pkl", "wb") as file:
     pickle.dump(train_test_metric_dict, file)
 
 print(f'Evaluation completed.')

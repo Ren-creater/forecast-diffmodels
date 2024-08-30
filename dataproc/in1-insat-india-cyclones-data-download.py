@@ -25,7 +25,7 @@ warnings.filterwarnings("ignore")
 
 sys.stdout = open(f'IN_LOG_{datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")}.log','wt')
 
-BASE_DIR = "/vol/bitbucket/zr523/researchProject/satellite/mosdac"
+BASE_DIR = "/rds/general/user/zr523/home/researchProject/satellite/mosdac"
 
 cyclones_path = "./list_of_cyclones.xlsx"
 df = pd.read_excel(cyclones_path)
@@ -69,7 +69,7 @@ def download_insat3d(date, order_no, name, count=1):
     year = date.year ; month = date.month ; day = date.day ; hour = date.hour ;
     
     stub = "3DIMG_" + f"{date.strftime('%d%b%Y_%H%M').upper()}" + "_L1B_STD_V01R00.h5"
-    #source = f"/vol/bitbucket/zr523/researchProject/Order/{order_no}/{stub}"
+    #source = f"/rds/general/user/zr523/home/researchProject/Order/{order_no}/{stub}"
     remote_path = f"Order/{order_no}/{stub}"
     dest_folder = f"{BASE_DIR}/data/h5/{name.replace(' ', '').lower()}/{year}-{month:02}-{day:02}/" ; local_path  = f"{dest_folder}{stub}"
     os.makedirs(dest_folder, exist_ok=True)

@@ -7,10 +7,10 @@ from tqdm import tqdm
 
 from utils import *
 
-BASE_DIR = "/vol/bitbucket/zr523/researchProject/satellite/dataloader/64_FC"
+BASE_DIR = "/rds/general/user/zr523/home/researchProject/satellite/dataloader/64_FC"
 c_dataloader_fns = glob.glob(BASE_DIR + "/*.dat")
 
-test_set = pickle.load(open("/vol/bitbucket/zr523/researchProject/forecast-diffmodels/dataproc/test_set.pkl", "rb"))
+test_set = pickle.load(open("/rds/general/user/zr523/home/researchProject/forecast-diffmodels/dataproc/test_set.pkl", "rb"))
 train_dataloader = ModelDataLoader(batch_size=4, mode="fc", augment=False#True
                                    )
 test_dataloader  = ModelDataLoader(batch_size=4, mode="fc", test=True)

@@ -9,7 +9,7 @@ warnings.filterwarnings("ignore")
 
 from utils import *
 
-BASE_DIR = "/vol/bitbucket/zr523/researchProject/satellite/metadata"
+BASE_DIR = "/rds/general/user/zr523/home/researchProject/satellite/metadata"
 
 def get_satmaps(region, name):
     satmaps = {
@@ -17,7 +17,7 @@ def get_satmaps(region, name):
         "name": name
     }
     
-    ERA5_BASE_DIR = "/vol/bitbucket/zr523/researchProject/satellite/era5"
+    ERA5_BASE_DIR = "/rds/general/user/zr523/home/researchProject/satellite/era5"
     SKIP_FRAMES = 1
     region = region_to_abbv[region]
     name = name.replace(' ', '').lower()
@@ -59,7 +59,7 @@ def get_satmaps(region, name):
     satmaps["satmaps"] = []
     
     if region == "nio":
-        IR108_BASE_DIR = "/vol/bitbucket/zr523/researchProject/satellite/mosdac"
+        IR108_BASE_DIR = "/rds/general/user/zr523/home/researchProject/satellite/mosdac"
         h5_files = sorted(glob.glob(f"{IR108_BASE_DIR}/data/h5/{name}/*/*.h5"))
         for idx in range(0, len(h5_files), SKIP_FRAMES):
             h5_file = h5_files[idx]
@@ -69,7 +69,7 @@ def get_satmaps(region, name):
             satmaps["satmaps"].append({"date": date, "ir108_fn": h5_file}) 
 
     if region in ["aus", "wpo"]:
-        IR108_BASE_DIR = "/vol/bitbucket/zr523/researchProject/satellite/himawari"
+        IR108_BASE_DIR = "/rds/general/user/zr523/home/researchProject/satellite/himawari"
         hr_dirs = sorted(glob.glob(f"{IR108_BASE_DIR}/data/bz2/{name}/*/*"))
         for idx in range(0, len(hr_dirs), SKIP_FRAMES):
             hr_dir = hr_dirs[idx]
@@ -79,7 +79,7 @@ def get_satmaps(region, name):
                 satmaps["satmaps"].append({"date": date, "ir108_fn": hr_dir})  
 
     if region == "wio":
-        IR108_BASE_DIR = "/vol/bitbucket/zr523/researchProject/satellite/msg"
+        IR108_BASE_DIR = "/rds/general/user/zr523/home/researchProject/satellite/msg"
         nat_files = sorted(glob.glob(f"{IR108_BASE_DIR}/data/native/{name}/*.nat"))
         for idx in range(0, len(nat_files), SKIP_FRAMES):
             nat_file = nat_files[idx]
@@ -88,7 +88,7 @@ def get_satmaps(region, name):
             satmaps["satmaps"].append({"date": date, "ir108_fn": nat_file})  
 
     if region == "use":
-        IR108_BASE_DIR = "/vol/bitbucket/zr523/researchProject/satellite/goes_east"
+        IR108_BASE_DIR = "/rds/general/user/zr523/home/researchProject/satellite/goes_east"
         nc_files = sorted(glob.glob(f"{IR108_BASE_DIR}/data/nc/{name}/*/*.nc"))
         for idx in range(0, len(nc_files), SKIP_FRAMES):
             nc_file = nc_files[idx]
@@ -99,7 +99,7 @@ def get_satmaps(region, name):
             satmaps["satmaps"].append({"date": date, "ir108_fn": nc_file})  
 
     if region == "usw":
-        IR108_BASE_DIR = "/vol/bitbucket/zr523/researchProject/satellite/goes_west"
+        IR108_BASE_DIR = "/rds/general/user/zr523/home/researchProject/satellite/goes_west"
         nc_files = sorted(glob.glob(f"{IR108_BASE_DIR}/data/nc/{name}/*/*.nc"))
         for idx in range(0, len(nc_files), SKIP_FRAMES):
             nc_file = nc_files[idx]

@@ -23,7 +23,7 @@ import sys
 sys.stdout = open(f'ERA5_LOG_{datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")}.log','wt')
 print = partial(print, flush=True)
 
-BASE_DIR = "/vol/bitbucket/zr523/researchProject/satellite/era5"
+BASE_DIR = "/rds/general/user/zr523/home/researchProject/satellite/era5"
 
 ERA5_VARIABLES = [
             '100m_u_component_of_wind', '100m_v_component_of_wind', '10m_u_component_of_neutral_wind',
