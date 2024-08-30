@@ -54,7 +54,7 @@ class DDPMArgs:
 args = DDPMArgs()
 args.batch_size = 8
 args.image_size = 64 ; args.o_size = 64 ; args.n_size = 128 ;
-args.continuous_embed_dim = 64*64*4
+args.continuous_embed_dim = 64*64*3*args.batch_size
 args.dataset_path = f"/rds/general/ephemeral/user/zr523/ephemeral/satellite/dataloader/{args.o_size}_FC"
 args.datalimit = False
 args.lr = 3e-4
@@ -117,7 +117,19 @@ for idx in range(len(test_dataloader)):
     for key in metric_dict.keys():
         test_metric_dict[key].append(metric_dict[key])
 
+print("individual")
 print(test_metric_dict)
+# Initialize a dictionary to store the averages
+average_metric_dict = {}
+
+# Iterate over each key in the dictionary
+for key, values in test_metric_dict.items():
+    # Calculate the average for the current key
+    average_metric_dict[key] = sum(values) / len(values)
+
+# Now average_metric_dict will contain the average values for each key
+print("average")
+print(average_metric_dict)
 
 with open(f"/rds/general/user/zr523/home/researchProject/models/{RUN_NAME}/metrics_test.pkl", "wb") as file:
     pickle.dump(test_metric_dict, file)
