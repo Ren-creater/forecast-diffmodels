@@ -11,7 +11,7 @@ sys.path.append("../imagen/")
 sys.path.append("../../dataproc/")
 
 from helpers import *
-from imagen_pytorch import Unet, Imagen, ImagenTrainer, NullUnet
+from imagen_pytorch import Unet3D, Imagen, ImagenTrainer, NullUnet
 from send_emails import *
 
 seed_value = 42
@@ -37,7 +37,7 @@ best_epoch_dict = {
     "64_FC_3e-4": 235
 }
 
-unet1 = Unet(
+unet1 = Unet3D(
     dim = 32,
     cond_dim = 1024,
     dim_mults = (1, 2, 4, 8),
