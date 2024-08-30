@@ -3,6 +3,8 @@ import copy
 import argparse
 from functools import partial, partialmethod
 
+from einops import rearrange
+
 import sys
 sys.path.append("../")
 sys.path.append("../imagen/")

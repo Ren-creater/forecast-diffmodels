@@ -3,6 +3,8 @@ import copy
 import argparse
 from functools import partial, partialmethod
 
+from einops import rearrange
+
 import sys
 sys.path.append("../")
 sys.path.append("../imagen/")
@@ -97,13 +99,17 @@ for idx in range(len(test_dataloader)):
     
     batch_idx = test_dataloader.random_idx[idx]
     img_64, _, era5 = test_dataloader.get_batch(batch_idx)
-    cond_embeds = era5.reshape(era5.shape[0], -1).float().cuda()
-    ema_sampled_images = imagen.sample(
-            batch_size = img_64.shape[0],          
+    cond_embeds = era5.reshape(1, -1).float().cuda()
+    ema_sampled_vid = imagen.sample(
+            batch_size = 1,#img_64.shape[0],          
             cond_scale = 3.,
             continuous_embeds = cond_embeds,
-            use_tqdm = False
+            use_tqdm = False,
+            video_frames = 8
         )
+
+    ema_sampled_vid = ema_sampled_vid.squeeze(0)
+    ema_sampled_images = rearrange(ema_sampled_vid, 'c t h w -> t c h w')
     
     y_true = img_64.cpu()
     y_pred = ema_sampled_images.cpu()
