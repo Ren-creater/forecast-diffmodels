@@ -117,6 +117,8 @@ for idx in range(len(test_dataloader)):
     for key in metric_dict.keys():
         test_metric_dict[key].append(metric_dict[key])
 
+print(test_metric_dict)
+
 with open(f"/rds/general/user/zr523/home/researchProject/models/{RUN_NAME}/metrics_test.pkl", "wb") as file:
     pickle.dump(test_metric_dict, file)
 
