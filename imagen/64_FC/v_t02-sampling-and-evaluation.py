@@ -53,7 +53,7 @@ args = DDPMArgs()
 args.batch_size = 8
 args.image_size = 64 ; args.o_size = 64 ; args.n_size = 128 ;
 args.continuous_embed_dim = 64*64*3*args.batch_size
-args.dataset_path = f"/rds/general/user/zr523/home/researchProject/satellite/dataloader/{args.o_size}_FC"
+args.dataset_path = f"/rds/general/ephemeral/user/zr523/ephemeral/satellite/dataloader/{args.o_size}_FC"
 args.datalimit = False
 args.mode = "fc"
 args.lr = float(RUN_NAME.split('_')[-1])
