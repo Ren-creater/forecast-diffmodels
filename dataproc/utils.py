@@ -591,7 +591,7 @@ class v_ModelDataLoader(ModelDataLoader):
         if self.mode == "tp":
             return self.img_o[idx], self.img_n[idx], self._to3channel(self.era5[idx])
         if self.mode == "fc":
-            if self.modality == "img":
+            if self.modality == "vid":
                 return self._to3channel(self.vid_cond[idx]), self.vid_to3channel(self.vid[idx]), self.era5_vid[idx]
             else:
                 return self._to3channel(self.img_cond[idx]), self._to3channel(self.img[idx]), self.zero_pad(self.era5_img[idx])

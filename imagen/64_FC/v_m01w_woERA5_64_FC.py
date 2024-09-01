@@ -164,7 +164,7 @@ args.augment = False#True
 args.mode = "fc"
 args.shuffle_every_epoch = False
 
-args.dataloaders = get_satellite_data(args)
+args.dataloaders = get_satellite_data(args, "vid")
 logging.info(f"Dataset loaded")
 
 imagen = Imagen(

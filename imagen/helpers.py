@@ -80,7 +80,7 @@ def get_cifar10_data(args):
                             num_workers=8)
     return dataloader
 
-def get_satellite_data(args):
+def get_satellite_data(args, modality = "img"):
     if hasattr(args, "region"):
         c_dataloader_fns = glob.glob(args.dataset_path + f"/{args.region}_*.dat") 
     elif hasattr(args, "exclude_region"):
@@ -96,12 +96,24 @@ def get_satellite_data(args):
     if hasattr(args, "mode"): mode = args.mode
     else: mode = "sr"
     
-    train_dataloader = ModelDataLoader(batch_size=args.batch_size, 
+    if modality == "vid":
+        train_dataloader = ModelDataLoader(batch_size=args.batch_size, 
                                        o_size=args.o_size, 
                                        n_size=args.n_size,
                                        augment=augment,
                                        mode=mode)
-    test_dataloader  = ModelDataLoader(batch_size=args.batch_size, 
+        test_dataloader  = ModelDataLoader(batch_size=args.batch_size, 
+                                       o_size=args.o_size, 
+                                       n_size=args.n_size, 
+                                       mode=mode,
+                                       test=True)
+    else:
+        train_dataloader = v_ModelDataLoader(batch_size=args.batch_size, 
+                                       o_size=args.o_size, 
+                                       n_size=args.n_size,
+                                       augment=augment,
+                                       mode=mode)
+        test_dataloader  = v_ModelDataLoader(batch_size=args.batch_size, 
                                        o_size=args.o_size, 
                                        n_size=args.n_size, 
                                        mode=mode,

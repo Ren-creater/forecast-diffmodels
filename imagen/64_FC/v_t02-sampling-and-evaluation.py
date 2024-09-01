@@ -58,7 +58,7 @@ args.datalimit = False
 args.mode = "fc"
 args.lr = float(RUN_NAME.split('_')[-1])
 
-train_dataloader, test_dataloader = get_satellite_data(args)
+train_dataloader, test_dataloader = get_satellite_data(args, "vid")
 _ = len(train_dataloader) ; _ = len(test_dataloader)
 
 if '1k' in RUN_NAME:

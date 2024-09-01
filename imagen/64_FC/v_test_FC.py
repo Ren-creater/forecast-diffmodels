@@ -60,7 +60,7 @@ args.datalimit = False
 args.lr = 3e-4
 args.mode = "fc"
 
-train_dataloader, test_dataloader = get_satellite_data(args)
+train_dataloader, test_dataloader = get_satellite_data(args, "vid")
 _ = len(train_dataloader) ; _ = len(test_dataloader)
 
 print("Dataloaders loaded.")

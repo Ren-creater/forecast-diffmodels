@@ -110,6 +110,31 @@ def train(args):
             train_dataloader.switch_to_vid()
             test_dataloader.switch_to_vid()
 
+        # for i, (img_64, _, era5) in enumerate(pbar):
+        #     cond_embeds = era5.reshape(era5.shape[0], -1).float().cuda()
+        #     img_64 = img_64.float().cuda()
+            
+        #     loss = trainer(images=img_64,
+        #                    continuous_embeds=cond_embeds,
+        #                    unet_number=k)
+        #     trainer.update(unet_number=k)
+    
+        #     pbar.set_postfix({f"MSE_{k}":loss})
+        #     logger.add_scalar(f"MSE_{k}",loss, global_step=epoch*len(train_dataloader)+i)
+
+        # for i, (img_64, _, era5) in enumerate(pbar):            
+        #     cond_embeds = era5.reshape(1, -1).float().cuda()                        
+        #     vid_64 = rearrange(img_64, 'b c h w -> 1 c b h w')
+
+        #     loss = trainer(vid_64,
+        #                    continuous_embeds=cond_embeds,
+        #                    unet_number=k,
+        #                    ignore_time=False)
+        #     trainer.update(unet_number=k)
+    
+        #     pbar.set_postfix({f"MSE_{k}":loss})
+        #     logger.add_scalar(f"MSE_{k}",loss, global_step=epoch*len(train_dataloader)+i)
+
         for i, (vid_cond, vid_64, era5) in enumerate(pbar):            
             cond_embeds = era5.reshape(1, -1).float().cuda()                        
             loss = trainer(vid_64,
@@ -179,7 +204,7 @@ args.mode = "fc"
 args.shuffle_every_epoch = False
 args.region = region_to_abbv["Australia"]#"North Indian Ocean"]
 
-args.dataloaders = get_satellite_data(args)
+args.dataloaders = get_satellite_data(args, "vid")
 logging.info(f"Dataset loaded")
 
 def get_n_params(model):
