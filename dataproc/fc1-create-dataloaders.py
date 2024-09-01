@@ -75,14 +75,18 @@ def fetch_cyclone(idx):
         ir108_fn = cyclone.metadata['satmaps'][old_satmap_idx]['ir108_fn']
         ir108_scn = cyclone.get_ir108_data(ir108_fn)    
         img = ir108_scn.to_numpy() ; 
+        
+        # Replace NaN values with 0
+        img = np.nan_to_num(img, nan=0.0)
+        
         img = transform_make_sq_image(img) 
         img = skimage.transform.resize(img, (o_size, o_size), anti_aliasing=True)
         img = torch.from_numpy(img).unsqueeze(0)
         
         #commented out below for video
-        #era5 = torch.cat([img, era5]).unsqueeze(0)
+        era5 = torch.cat([img, era5]).unsqueeze(0)
         #added below for video
-        era5 = era5.unsqueeze(0)
+        #era5 = era5.unsqueeze(0)
                
         if torch.isnan(img_o.sum()) or torch.isnan(img_n.sum()) or torch.isnan(era5.sum()):
             print(f"[NAN]\t{region}\t{name}\t{satmap_idx}", flush=True)

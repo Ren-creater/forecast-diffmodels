@@ -15,6 +15,8 @@ import sys
 sys.path.append("/rds/general/user/zr523/home/researchProject/forecast-diffmodels/imagen/")
 from imagen_pytorch import Unet, Imagen, ImagenTrainer, NullUnet
 
+import torch.nn.functional as F
+
 abbv_to_region = {
     "nio": "North Indian Ocean",
     "aus": "Australia",
@@ -300,7 +302,7 @@ class Cyclone:
         return f"{self.abbv_region}_{name}"
 
     def __init__(self, region, name):        
-        self.BASE_DIR = "/rds/general/user/zr523/home/researchProject/satellite/metadata"
+        self.BASE_DIR = "/vol/bitbucket/zr523/researchProject/satellite/metadata"
         self.filename = self._get_filename(region, name)
         with open(f"{self.BASE_DIR}/{self.filename}.metadata", 'rb') as metadata_file:
             self.metadata = pickle.load(metadata_file)
@@ -364,8 +366,7 @@ class CycloneDataLoader:
                                    dtype=torch.float32)
             self.img_128 = torch.empty((0, 128, 128), 
                                     dtype=torch.float32)
-            # changed 4 to 3 below            
-            self.era5 = torch.empty((0, 3, 64, 64), 
+            self.era5 = torch.empty((0, 4, 64, 64), 
                                     dtype=torch.float32)
 
     
@@ -377,12 +378,9 @@ class CycloneDataLoader:
 class ModelDataLoader:
     def __init__(self, batch_size, o_size=64, n_size=128, 
                  augment=False, 
-                 test=False, mode="sr", shuffle=False#True
-                 ,shuffle_batch = True
-                 ):
+                 test=False, mode="sr", shuffle=True):
         self.batch_size = batch_size
-        self.shuffle = shuffle
-        self.shuffle_batch = shuffle_batch        
+        self.shuffle = shuffle        
         
         self.mode = mode
                      
@@ -406,8 +404,7 @@ class ModelDataLoader:
                                    dtype=torch.float32)
             self.img_n = torch.empty((0, n_size, n_size), 
                                     dtype=torch.float32)
-            # changed 4 to 3 below
-            self.era5 = torch.empty((0, 3, o_size, o_size), 
+            self.era5 = torch.empty((0, 4, o_size, o_size), 
                                     dtype=torch.float32)
             
         self.new_data = True
@@ -475,11 +472,7 @@ class ModelDataLoader:
             size -= size % batch_size
         idx = torch.tensor(list(range(size)))
         if self.shuffle: idx = torch.randperm(size)
-        random_idx = idx.reshape(-1, batch_size)
-        if self.shuffle_batch:
-            random_idx = random_idx[torch.randperm(int(size / batch_size))]
-        self.random_idx = random_idx
-
+        self.random_idx = idx.reshape(-1, batch_size)
 
     def get_batch(self, idx): 
         if self.mode == "sr":
@@ -488,6 +481,125 @@ class ModelDataLoader:
             return self.img_o[idx], self.img_n[idx], self._to3channel(self.era5[idx])
         if self.mode == "fc":
             return self._to3channel(self.img_o[idx]), self.img_n[idx], self.era5[idx]
+
+
+class v_ModelDataLoader(ModelDataLoader):
+    def __init__(self, batch_size, o_size=64, n_size=128, 
+                 augment=False, 
+                 test=False, mode="fc", shuffle=True
+                 ):
+        self.batch_size = batch_size
+        self.shuffle = shuffle        
+        self.mode = mode
+        self.modality = "img"
+                     
+        if mode == "sr":
+            self.img_o = torch.empty((0, o_size, o_size), 
+                                   dtype=torch.float32)
+            self.img_n = torch.empty((0, n_size, n_size), 
+                                    dtype=torch.float32)
+            self.era5 = torch.empty((0, 3, n_size, n_size), 
+                                    dtype=torch.float32)
+        if mode == "tp":
+            self.img_o = torch.empty((0, 4, o_size, o_size), 
+                                   dtype=torch.float32)
+            self.img_n = torch.empty((0, n_size, n_size), 
+                                    dtype=torch.float32)
+            self.era5 = torch.empty((0, o_size, o_size), 
+                                    dtype=torch.float32)
+
+        if mode == "fc":
+            self.img_cond = torch.empty((0, o_size, o_size), 
+                                    dtype=torch.float32)            
+            self.img = torch.empty((0, o_size, o_size), 
+                                   dtype=torch.float32)
+            self.era5_img = torch.empty((0, 3, o_size, o_size), 
+                                    dtype=torch.float32)
+            self.vid_cond = torch.empty((0, o_size, o_size), 
+                                    dtype=torch.float32)
+            self.vid = torch.empty((0, 8, o_size, o_size), 
+                                    dtype=torch.float32)
+            self.era5_vid = torch.empty((0, 3, 8, o_size, o_size), 
+                                    dtype=torch.float32)
+        self.new_data = True
+        self.test = test
+        self.augment = augment
+
+    def vid_to3channel(self, x):
+        return x.expand(3, *x.shape[0:]).permute(dims=(1, 2, 0, 3, 4))
+
+    def add_img_rotations(self, n=3):  
+        x, y, z = self.img_cond, self.img, self.era5_img
+        i = 0
+        while i < n:
+            x_90, y_90, z_90 = rotate90(x, y, z)
+            self.img_cond, self.img, self.era5_img = torch.cat([self.img_cond, x_90]), torch.cat([self.img, y_90]), torch.cat([self.era5_img, z_90])
+            x, y, z = x_90, y_90, z_90
+            i += 1
+
+    def switch_to_vid(self):
+        self.modality = "vid"
+
+    def add_vid(self, img_o, img_n, era5):
+        size = era5.shape[0]
+        if size % 8 != 0:
+            size -= size % 8
+        for i in range(0, size, 8):
+            self.vid = torch.cat((self.vid, img_o[i:i+8, :, :]), 0)
+            self.vid_cond = torch.cat((self.vid_cond, era5[i:i+1, 0:1, :, :]), 0)
+            self.era5_vid = torch.cat((self.vid, era5[i:i+8, 1:, :, :]), 0)
+        start = size+1
+        end = era5.shape[0]
+        self.img = torch.cat((self.img, img_o[start:end]), 0)
+        self.img_cond = torch.cat((self.vid_cond, era5[start:end, 0:1, :, :]), 0)
+        self.era5_img = torch.cat((self.vid, era5[start:end, 1:, :, :]), 0)
+
+        self.new_data = True
+    
+    def add_dataloader(self, cyclone_dataloader):
+        if self.mode == "sr":
+            img_o = self.normalize(cyclone_dataloader.img_64)
+            img_n = self.normalize(cyclone_dataloader.img_128)
+            era5  = cyclone_dataloader.era5       
+        if self.mode == "tp":
+            img_o = cyclone_dataloader.img_64
+            img_n = cyclone_dataloader.img_128
+            era5  = self.normalize(cyclone_dataloader.era5)
+        if self.mode == "fc":
+            img_o = self.normalize(cyclone_dataloader.img_64)
+            img_n = cyclone_dataloader.img_128
+            era5  = cyclone_dataloader.era5
+        #self.add_image(img_o, img_n, era5)
+        self.add_vid(img_o, img_n, era5)
+
+    def create_batches(self, batch_size, perform_augmentation=True):
+        if self.augment and perform_augmentation and (self.test == False): self.add_rotations()
+        if self.modality == "img":
+            size = self.era5_img.shape[0]
+        else:
+            size = self.era5_vid.shape[0]
+        if size % batch_size != 0:
+            size -= size % batch_size
+        idx = torch.tensor(list(range(size)))
+        if self.shuffle: idx = torch.randperm(size)
+        random_idx = idx.reshape(-1, batch_size)
+        self.random_idx = random_idx
+
+    def get_batch(self, idx): 
+        if self.mode == "sr":
+            return self._to3channel(self.img_o[idx]), self._to3channel(self.img_n[idx]), self.era5[idx]
+        if self.mode == "tp":
+            return self.img_o[idx], self.img_n[idx], self._to3channel(self.era5[idx])
+        if self.mode == "fc":
+            if self.modality == "img":
+                return self._to3channel(self.vid_cond[idx]), self.vid_to3channel(self.vid[idx]), self.era5_vid[idx]
+            else:
+                return self._to3channel(self.img_cond[idx]), self._to3channel(self.img[idx]), self.zero_pad(self.era5_img[idx])
+            #return self._to3channel(self.img_o[idx]), self.img_n[idx], self.era5[idx]
+    
+    def zero_pad(self, x):
+        padding = (0, 0, 0, 0, 0, 7)
+        return F.pad(x.unsqueeze(1), padding)
 
 # ---------------------------------------------
 # Other helpful methods

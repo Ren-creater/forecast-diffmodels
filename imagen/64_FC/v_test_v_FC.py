@@ -22,7 +22,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-run_name', help='Specify the run name (for eg. 64_FC_3e-4)')
 args = parser.parse_args()
 
-sys.stdout = open(f'METRICS_LOG_{datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")}.log','wt')
+sys.stdout = open(f'v_FC_TEST_METRICS_LOG_{datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")}.log','wt')
 print = partial(print, flush=True)
 tqdm.__init__ = partialmethod(tqdm.__init__, disable=True)
 
@@ -31,9 +31,12 @@ BASE_DIR = f"/rds/general/user/zr523/home/researchProject/models/{RUN_NAME}/mode
 
 print(f"Run name: {RUN_NAME}")
 
-ckpt_files = sorted(glob.glob(BASE_DIR + "ckpt_1_*"))
-ckpt_trainer_files = sorted(glob.glob(BASE_DIR + "ckpt_trainer_1_*"))
-
+best_epoch_dict = {
+    "64_FC_rot904_sep_3e-4": 180,
+    "64_FC_rot904_3e-4": 240,
+    "64_FC_3e-4": 235,
+    "v_FC_3e-4": 235
+}
 
 unet1 = Unet3D(
     dim = 32,
@@ -55,11 +58,13 @@ args.image_size = 64 ; args.o_size = 64 ; args.n_size = 128 ;
 args.continuous_embed_dim = 64*64*3*args.batch_size
 args.dataset_path = f"/rds/general/ephemeral/user/zr523/ephemeral/satellite/dataloader/{args.o_size}_FC"
 args.datalimit = False
+args.lr = 3e-4
 args.mode = "fc"
-args.lr = float(RUN_NAME.split('_')[-1])
 
 train_dataloader, test_dataloader = get_satellite_data(args)
 _ = len(train_dataloader) ; _ = len(test_dataloader)
+
+print("Dataloaders loaded.")
 
 if '1k' in RUN_NAME:
     timesteps = 1000
@@ -75,8 +80,6 @@ imagen = Imagen(
     continuous_embed_dim = args.continuous_embed_dim,
 )
 
-random_idx = [5]
-
 metric_dict = {
     "kl_div": [],
     "rmse": [],
@@ -86,30 +89,22 @@ metric_dict = {
     "fid": []
 }
 
-train_test_metric_dict = {
-    "train": copy.deepcopy(metric_dict), 
-    "test": copy.deepcopy(metric_dict)
-}
+test_metric_dict = copy.deepcopy(metric_dict)
+best_epoch = best_epoch_dict[RUN_NAME]
+ckpt_trainer_path = f"{BASE_DIR}/ckpt_trainer_1_{best_epoch:03}.pt"
+trainer = ImagenTrainer(imagen, lr=args.lr, verbose=False).cuda()
+trainer.load(ckpt_trainer_path) 
 
-train_dataloader.switch_to_vid()
 test_dataloader.switch_to_vid()
 
-for idx in range(len(ckpt_trainer_files)):
-    ckpt_trainer_path = ckpt_trainer_files[idx]
-    print(f'Evaluating {ckpt_trainer_path.split("/")[-1]} ...')
-
-    for mode in ["train", "test"]:
-        if mode == "train" : dataloader = train_dataloader
-        elif mode == "test": dataloader = test_dataloader
+for idx in range(len(test_dataloader)):
+    print(f"Evaluating batch idx {idx} ...")
     
-        trainer = ImagenTrainer(imagen, lr=args.lr, verbose=False).cuda()
-        trainer.load(ckpt_trainer_path)  
+    batch_idx = test_dataloader.random_idx[idx]
+    vid_cond, vid, era5 = test_dataloader.get_batch(batch_idx)
         
-        batch_idx = dataloader.random_idx[random_idx[0]]
-        
-        vid_cond, vid, era5 = dataloader.get_batch(batch_idx)
-        cond_embeds = era5.reshape(1, -1).float().cuda()
-        ema_sampled_vid = imagen.sample(
+    cond_embeds = era5.reshape(1, -1).float().cuda()
+    ema_sampled_vid = imagen.sample(
                     batch_size = vid.shape[0],#img_64.shape[0],          
                     cond_scale = 3.,
                     continuous_embeds=cond_embeds,
@@ -117,21 +112,35 @@ for idx in range(len(ckpt_trainer_files)):
                     video_frames = vid.shape[2],
                     cond_video_frames=vid_cond
             )
-        #ema_sampled_vid = ema_sampled_vid.squeeze(0)
-        ema_sampled_images = rearrange(ema_sampled_vid, 'b c t h w -> (b t) c h w')
-        img_64 = rearrange(vid, 'b c t h w -> (b t) c h w')
+    #ema_sampled_vid = ema_sampled_vid.squeeze(0)
+    ema_sampled_images = rearrange(ema_sampled_vid, 'b c t h w -> (b t) c h w')
+    img_64 = rearrange(vid, 'b c t h w -> (b t) c h w')
+    
+    y_true = img_64.cpu()
+    y_pred = ema_sampled_images.cpu()
+    metric_dict = calculate_metrics(y_pred, y_true)
+    for key in metric_dict.keys():
+        test_metric_dict[key].append(metric_dict[key])
 
-        y_true = img_64.cpu()
-        y_pred = ema_sampled_images.cpu()
-        metric_dict = calculate_metrics(y_pred, y_true)
-        for key in metric_dict.keys():
-            train_test_metric_dict[mode][key].append(metric_dict[key])
+print("individual")
+print(test_metric_dict)
+# Initialize a dictionary to store the averages
+average_metric_dict = {}
 
-with open(f"/rds/general/user/zr523/home/researchProject/models/{RUN_NAME}/metrics.pkl", "wb") as file:
-    pickle.dump(train_test_metric_dict, file)
+# Iterate over each key in the dictionary
+for key, values in test_metric_dict.items():
+    # Calculate the average for the current key
+    average_metric_dict[key] = sum(values) / len(values)
+
+# Now average_metric_dict will contain the average values for each key
+print("average")
+print(average_metric_dict)
+
+with open(f"/rds/general/user/zr523/home/researchProject/models/{RUN_NAME}/metrics_test.pkl", "wb") as file:
+    pickle.dump(test_metric_dict, file)
 
 print(f'Evaluation completed.')
 
-subject = f"[COMPLETED] Evaluation Metrics"
+subject = f"[COMPLETED] Test Evaluation Metrics"
 message_txt = f"""Metrics Evaluation Completed for {RUN_NAME}"""
 send_txt_email(message_txt, subject)

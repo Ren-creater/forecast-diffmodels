@@ -6,6 +6,10 @@ eval "$(~/anaconda3/bin/conda shell.bash hook)"
 
 source activate research_env
 
+#conda install python=3.10.12
+
+#python3 -m pip install -r /rds/general/user/zr523/home/researchProject/forecast-diffmodels/imagen/requirements.txt
+
 cd /rds/general/user/zr523/home/researchProject/
 
 cd imagen-pytorch
@@ -14,6 +18,6 @@ cd ..
 
 cd forecast-diffmodels/imagen/64_FC
 
-#pip install torchmetrics[image]
+#accelerate config
 
-python v_t07-test-set-evaluation.py -run_name 64_FC_3e-4
+python v_64_FC.py -mode execute -epochs 261

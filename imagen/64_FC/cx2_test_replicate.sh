@@ -16,4 +16,4 @@ cd forecast-diffmodels/imagen/64_FC
 
 #pip install torchmetrics[image]
 
-python v_t07-test-set-evaluation.py -run_name 64_FC_3e-4
+python v_test_FC.py -run_name 64_FC_3e-4

@@ -16,7 +16,7 @@ from torch import optim
 import logging
 from torch.utils.tensorboard import SummaryWriter
 
-RUN_NAME = "64_FC_3e-4"
+RUN_NAME = "64_FC_woERA5"
 BASE_DIR = f"/rds/general/user/zr523/home/researchProject/models/{RUN_NAME}"
 
 os.makedirs(BASE_DIR, exist_ok=True)
@@ -101,6 +101,7 @@ def train(args):
             _ = len(train_dataloader) ; train_dataloader.create_batches(args.batch_size, False)
         pbar = tqdm(train_dataloader)
         for i, (img_64, _, era5) in enumerate(pbar):
+            era5 = era5[:, 0:1, :, :]
             cond_embeds = era5.reshape(era5.shape[0], -1).float().cuda()
             img_64 = img_64.float().cuda()
             
@@ -130,6 +131,7 @@ def train(args):
             logging.info(f"Starting sampling for epoch {epoch}:") ; _ = len(test_dataloader)               
             random_batch = test_dataloader.random_idx[random_batch_idx][0]
             img_64, _, era5 = test_dataloader.get_batch(random_batch)
+            era5 = era5[:, 0:1, :, :]
             
             cond_embeds = era5.reshape(era5.shape[0], -1).float().cuda()
             ema_sampled_images = imagen.sample(
@@ -152,8 +154,8 @@ args.run_name = RUN_NAME
 args.epochs = int(cmd_args.epochs)
 args.batch_size = 16
 args.image_size = 64 ; args.o_size = 64 ; args.n_size = 128 ;
-args.continuous_embed_dim = 64*64*4
-args.dataset_path = f"/rds/general/ephemeral/user/zr523/ephemeral/satellite/dataloader/{args.o_size}_FC"
+args.continuous_embed_dim = 64*64*1
+args.dataset_path = f"/rds/general/user/zr523/home/researchProject/satellite/dataloader/{args.o_size}_FC"
 args.device = "cuda"
 args.lr = 3e-4
 args.sample = True
@@ -161,7 +163,6 @@ args.datalimit = False
 args.augment = False#True
 args.mode = "fc"
 args.shuffle_every_epoch = False
-args.region = region_to_abbv["North Indian Ocean"]
 
 args.dataloaders = get_satellite_data(args)
 logging.info(f"Dataset loaded")

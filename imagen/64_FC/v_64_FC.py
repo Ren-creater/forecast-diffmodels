@@ -18,7 +18,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from einops import rearrange
 
-RUN_NAME = "64_FC"
+RUN_NAME = "v_64_FC_3e-4"
 BASE_DIR = f"/rds/general/user/zr523/home/researchProject/models/{RUN_NAME}"
 
 os.makedirs(BASE_DIR, exist_ok=True)
@@ -104,23 +104,16 @@ def train(args):
         print(len(train_dataloader))
         print(len(test_dataloader))
         pbar = tqdm(train_dataloader)
-        # for i, (img_64, _, era5) in enumerate(pbar):
-        #     cond_embeds = era5.reshape(era5.shape[0], -1).float().cuda()
-        #     img_64 = img_64.float().cuda()
-            
-        #     loss = trainer(images=img_64,
-        #                    continuous_embeds=cond_embeds,
-        #                    unet_number=k)
-        #     trainer.update(unet_number=k)
-    
-        #     pbar.set_postfix({f"MSE_{k}":loss})
-        #     logger.add_scalar(f"MSE_{k}",loss, global_step=epoch*len(train_dataloader)+i)
 
-        for i, (img_64, _, era5) in enumerate(pbar):            
+        if epoch > 50:
+            logging.info("Starting training on 8 frames videos")
+            train_dataloader.switch_to_vid()
+            test_dataloader.switch_to_vid()
+
+        for i, (vid_cond, vid_64, era5) in enumerate(pbar):            
             cond_embeds = era5.reshape(1, -1).float().cuda()                        
-            vid_64 = rearrange(img_64, 'b c h w -> 1 c b h w')
-
             loss = trainer(vid_64,
+                           cond_video_frames=vid_cond,
                            continuous_embeds=cond_embeds,
                            unet_number=k,
                            ignore_time=False)
@@ -146,21 +139,21 @@ def train(args):
         if args.sample:
             logging.info(f"Starting sampling for epoch {epoch}:") ; _ = len(test_dataloader)               
             random_batch = test_dataloader.random_idx[random_batch_idx][0]
-            img_64, _, era5 = test_dataloader.get_batch(random_batch)
+            vid_cond, vid, era5 = test_dataloader.get_batch(random_batch)
             
             cond_embeds = era5.reshape(1, -1).float().cuda()
             ema_sampled_vid = imagen.sample(
-                        batch_size = 1,#img_64.shape[0],          
+                        batch_size = vid.shape[0],#img_64.shape[0],          
                         cond_scale = 3.,
                         continuous_embeds=cond_embeds,
                         use_tqdm = False,
-                        video_frames = 8
+                        video_frames = vid.shape[2],
+                        cond_video_frames=vid_cond
                 )
-            ema_sampled_vid = ema_sampled_vid.squeeze(0)
-            ema_sampled_images = rearrange(ema_sampled_vid, 'c t h w -> t c h w')
-
-            #for i in range(ema_sampled_images.shape[0]):
-            save_images_v2(test_dataloader, img_64, ema_sampled_images, os.path.join(f"{BASE_DIR}/results", args.run_name, f"{epoch}_ema.jpg"))
+            #ema_sampled_vid = ema_sampled_vid.squeeze(0)
+            ema_sampled_images = rearrange(ema_sampled_vid, 'b c t h w -> (b t) c h w')
+            vid = rearrange(vid, 'b c t h w -> (b t) c h w')
+            save_images_v2(test_dataloader, vid, ema_sampled_images, os.path.join(f"{BASE_DIR}/results", args.run_name, f"{epoch}_ema.jpg"))
             logging.info(f"Completed sampling for epoch {epoch}.")
                 
 import argparse
@@ -172,10 +165,10 @@ class DDPMArgs:
 args = DDPMArgs()
 args.run_name = RUN_NAME
 args.epochs = int(cmd_args.epochs)
-args.batch_size = 8
+args.batch_size = 1
 args.image_size = 64 ; args.o_size = 64 ; args.n_size = 128 ;
 #changed from 4 to 3 below, and * args.batch_size
-args.continuous_embed_dim = 64*64*3*args.batch_size
+args.continuous_embed_dim = 64*64*3*8
 args.dataset_path = f"/rds/general/ephemeral/user/zr523/ephemeral/satellite/dataloader/{args.o_size}_FC"
 args.device = "cuda"
 args.lr = 3e-4
