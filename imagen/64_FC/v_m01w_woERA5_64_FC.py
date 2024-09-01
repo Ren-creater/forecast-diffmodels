@@ -106,22 +106,10 @@ def train(args):
             test_dataloader.switch_to_vid()
 
         for i, (vid_cond, vid_64, era5) in enumerate(pbar):            
-            cond_embeds = era5.reshape(1, -1).float().cuda()                        
             loss = trainer(vid_64,
                            cond_video_frames=vid_cond,
-                           continuous_embeds=cond_embeds,
                            unet_number=k,
                            ignore_time=False)
-            trainer.update(unet_number=k)
-            
-        for i, (img_64, _, era5) in enumerate(pbar):
-            era5 = era5[:, 0:1, :, :]
-            cond_embeds = era5.reshape(era5.shape[0], -1).float().cuda()
-            img_64 = img_64.float().cuda()
-            
-            loss = trainer(images=img_64,
-                           continuous_embeds=cond_embeds,
-                           unet_number=k)
             trainer.update(unet_number=k)
     
             pbar.set_postfix({f"MSE_{k}":loss})
@@ -166,9 +154,9 @@ class DDPMArgs:
 args = DDPMArgs()
 args.run_name = RUN_NAME
 args.epochs = int(cmd_args.epochs)
-args.batch_size = 16
+args.batch_size = 1
 args.image_size = 64 ; args.o_size = 64 ; args.n_size = 128 ;
-args.continuous_embed_dim = 64*64*1
+# args.continuous_embed_dim = 64*64*1
 args.dataset_path = f"/rds/general/ephemeral/user/zr523/ephemeral/satellite/dataloader/{args.o_size}_FC"
 args.device = "cuda"
 args.lr = 3e-4

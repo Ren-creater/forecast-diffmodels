@@ -54,16 +54,20 @@ def save_images_v2(dataloader, x, y, path=None, **kwargs):
         axes[0].imshow(x[0].permute(1, 2, 0)[:, :, 0], cmap="gray")
         axes[1].imshow(y[0].permute(1, 2, 0)[:, :, 0], cmap="gray")
         axes[2].imshow(pixeldiff(x[0], y[0]))
+        for ax in axes:
+            ax.set_xticklabels([])
+            ax.set_yticklabels([])
+            ax.set_aspect('equal')
     else:
         for i in range(0, ncols):
             axes[0, i].imshow(x[i].permute(1, 2, 0)[:, :, 0], cmap="gray")
             axes[1, i].imshow(y[i].permute(1, 2, 0)[:, :, 0], cmap="gray")
             axes[2, i].imshow(pixeldiff(x[i], y[i]))
-    for row in axes:
-        for ax in row: 
-            ax.set_xticklabels([])
-            ax.set_yticklabels([])
-            ax.set_aspect('equal')
+        for row in axes:
+            for ax in row: 
+                ax.set_xticklabels([])
+                ax.set_yticklabels([])
+                ax.set_aspect('equal')
     fig.subplots_adjust(wspace=0, hspace=0)
     if path:
         plt.savefig(path, bbox_inches='tight')
