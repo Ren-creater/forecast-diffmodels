@@ -533,7 +533,7 @@ class v_ModelDataLoader(ModelDataLoader):
         self.augment = augment
 
     def vid_to3channel(self, x):
-        return x.expand(3, *x.shape[0:]).permute(dims=(1, 2, 0, 3, 4))
+        return x.expand(3, *x.shape[0:]).permute(dims=(1, 0, 2, 3, 4))
 
     def add_img_rotations(self, n=3):  
         x, y, z = self.img_cond, self.img, self.era5_img
