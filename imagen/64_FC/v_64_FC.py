@@ -65,7 +65,7 @@ unets = [unet1]
 def train(args):
     setup_logging(args.run_name, BASE_DIR)
     device = args.device
-    train_dataloader, test_dataloader = args.dataloaders ; random_batch_idx = [12]
+    train_dataloader, test_dataloader = args.dataloaders ; random_batch_idx = [5]
     logger = SummaryWriter(os.path.join(f"{BASE_DIR}/runs", args.run_name))
     epoch = 0
 
