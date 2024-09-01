@@ -16,7 +16,7 @@ from torch import optim
 import logging
 from torch.utils.tensorboard import SummaryWriter
 
-RUN_NAME = "64_FC_woERA5"
+RUN_NAME = "v_64_FC_woERA5"
 BASE_DIR = f"/rds/general/user/zr523/home/researchProject/models/{RUN_NAME}"
 
 os.makedirs(BASE_DIR, exist_ok=True)
@@ -50,7 +50,7 @@ from imagen_pytorch import Unet, Imagen, ImagenTrainer, NullUnet
 from functools import partialmethod
 tqdm.__init__ = partialmethod(tqdm.__init__, disable=True)
 
-unet1 = Unet(
+unet1 = Unet3D(
     dim = 32,
     cond_dim = 1024,
     dim_mults = (1, 2, 4, 8),
@@ -155,7 +155,7 @@ args.epochs = int(cmd_args.epochs)
 args.batch_size = 16
 args.image_size = 64 ; args.o_size = 64 ; args.n_size = 128 ;
 args.continuous_embed_dim = 64*64*1
-args.dataset_path = f"/rds/general/user/zr523/home/researchProject/satellite/dataloader/{args.o_size}_FC"
+args.dataset_path = f"/rds/general/ephemeral/user/zr523/ephemeral/satellite/dataloader/{args.o_size}_FC"
 args.device = "cuda"
 args.lr = 3e-4
 args.sample = True
