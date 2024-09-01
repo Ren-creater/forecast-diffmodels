@@ -16,6 +16,8 @@ from torch import optim
 import logging
 from torch.utils.tensorboard import SummaryWriter
 
+from einops import rearrange
+
 RUN_NAME = "v_64_FC_woERA5"
 BASE_DIR = f"/rds/general/user/zr523/home/researchProject/models/{RUN_NAME}"
 
@@ -132,17 +134,20 @@ def train(args):
         if args.sample:
             logging.info(f"Starting sampling for epoch {epoch}:") ; _ = len(test_dataloader)               
             random_batch = test_dataloader.random_idx[random_batch_idx][0]
-            img_64, _, era5 = test_dataloader.get_batch(random_batch)
-            era5 = era5[:, 0:1, :, :]
+
+            vid_cond, vid, _ = test_dataloader.get_batch(random_batch)
             
-            cond_embeds = era5.reshape(era5.shape[0], -1).float().cuda()
-            ema_sampled_images = imagen.sample(
-                        batch_size = img_64.shape[0],          
+            ema_sampled_vid = imagen.sample(
+                        batch_size = vid.shape[0],#img_64.shape[0],          
                         cond_scale = 3.,
-                        continuous_embeds=cond_embeds,
-                        use_tqdm = False
+                        use_tqdm = False,
+                        video_frames = vid.shape[2],
+                        cond_video_frames=vid_cond
                 )
-            save_images_v2(test_dataloader, img_64, ema_sampled_images, os.path.join(f"{BASE_DIR}/results", args.run_name, f"{epoch}_ema.jpg"))
+            #ema_sampled_vid = ema_sampled_vid.squeeze(0)
+            ema_sampled_images = rearrange(ema_sampled_vid, 'b c t h w -> (b t) c h w')
+            vid = rearrange(vid, 'b c t h w -> (b t) c h w')
+            save_images_v2(test_dataloader, vid, ema_sampled_images, os.path.join(f"{BASE_DIR}/results", args.run_name, f"{epoch}_ema.jpg"))
             logging.info(f"Completed sampling for epoch {epoch}.")
                 
 import argparse
