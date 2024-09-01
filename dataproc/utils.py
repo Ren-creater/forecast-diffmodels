@@ -551,8 +551,8 @@ class v_ModelDataLoader(ModelDataLoader):
         start = size+1
         end = era5.shape[0]
         self.img = torch.cat((self.img, img_o[start:end]), 0)
-        self.img_cond = torch.cat((self.vid_cond, era5[start:end, 0:1, :, :]), 0)
-        self.era5_img = torch.cat((self.vid, era5[start:end, 1:, :, :]), 0)
+        self.img_cond = torch.cat((self.img_cond, era5[start:end, 0:1, :, :]), 0)
+        self.era5_img = torch.cat((self.era5_img, era5[start:end, 1:, :, :]), 0)
 
         self.new_data = True
     
