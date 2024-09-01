@@ -592,9 +592,9 @@ class v_ModelDataLoader(ModelDataLoader):
             return self.img_o[idx], self.img_n[idx], self._to3channel(self.era5[idx])
         if self.mode == "fc":
             if self.modality == "vid":
-                return self._to3channel(self.vid_cond[idx]).unsqueeze(2).float(), self.vid_to3channel(self.vid[idx]), self.era5_vid[idx]
+                return self._to3channel(self.vid_cond[idx]).unsqueeze(2).float().cuda(), self.vid_to3channel(self.vid[idx]), self.era5_vid[idx]
             else:
-                return self._to3channel(self.img_cond[idx]).unsqueeze(2).float(), self._to3channel(self.img[idx]).unsqueeze(2), self.zero_pad(self.era5_img[idx])
+                return self._to3channel(self.img_cond[idx]).unsqueeze(2).float().cuda(), self._to3channel(self.img[idx]).unsqueeze(2), self.zero_pad(self.era5_img[idx])
             #return self._to3channel(self.img_o[idx]), self.img_n[idx], self.era5[idx]
     
     def zero_pad(self, x):
