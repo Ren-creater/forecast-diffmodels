@@ -50,10 +50,15 @@ def save_images_v2(dataloader, x, y, path=None, **kwargs):
     ncols = min(4, len(x))
     
     fig, axes = plt.subplots(3, ncols, figsize=(2*ncols, 6))
-    for i in range(0, ncols):
-        axes[0, i].imshow(x[i].permute(1, 2, 0)[:, :, 0], cmap="gray")  
-        axes[1, i].imshow(y[i].permute(1, 2, 0)[:, :, 0], cmap="gray")
-        axes[2, i].imshow(pixeldiff(x[i], y[i]))
+    if ncols == 1:
+        axes[0].imshow(x[0].permute(1, 2, 0)[:, :, 0], cmap="gray")
+        axes[1].imshow(y[0].permute(1, 2, 0)[:, :, 0], cmap="gray")
+        axes[2].imshow(pixeldiff(x[0], y[0]))
+    else:
+        for i in range(0, ncols):
+            axes[0, i].imshow(x[i].permute(1, 2, 0)[:, :, 0], cmap="gray")
+            axes[1, i].imshow(y[i].permute(1, 2, 0)[:, :, 0], cmap="gray")
+            axes[2, i].imshow(pixeldiff(x[i], y[i]))
     for row in axes:
         for ax in row: 
             ax.set_xticklabels([])
