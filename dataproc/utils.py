@@ -599,7 +599,7 @@ class v_ModelDataLoader(ModelDataLoader):
     
     def zero_pad(self, x):
         padding = (0, 0, 0, 0, 0, 7)
-        return F.pad(x.unsqueeze(1), padding)
+        return F.pad(x.unsqueeze(2), padding)
 
 # ---------------------------------------------
 # Other helpful methods
