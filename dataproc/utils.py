@@ -546,7 +546,7 @@ class v_ModelDataLoader(ModelDataLoader):
             size -= size % 8
         for i in range(0, size, 8):
             self.vid = torch.cat((self.vid, img_o[i:i+8, :, :].unsqueeze(0)), 0)
-            self.vid_cond = torch.cat((self.vid_cond, era5[i:i+1, 0:1, :, :].unsqueeze(0)), 0)
+            self.vid_cond = torch.cat((self.vid_cond, (era5[i:i+1, 0:1, :, :].squeeze()).unsqueeze(0)), 0)
             self.era5_vid = torch.cat((self.vid, era5[i:i+8, 1:, :, :].unsqueeze(0)), 0)
         start = size+1
         end = era5.shape[0]
