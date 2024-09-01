@@ -97,23 +97,23 @@ def get_satellite_data(args, modality = "img"):
     else: mode = "sr"
     
     if modality == "vid":
-        train_dataloader = ModelDataLoader(batch_size=args.batch_size, 
-                                       o_size=args.o_size, 
-                                       n_size=args.n_size,
-                                       augment=augment,
-                                       mode=mode)
-        test_dataloader  = ModelDataLoader(batch_size=args.batch_size, 
-                                       o_size=args.o_size, 
-                                       n_size=args.n_size, 
-                                       mode=mode,
-                                       test=True)
-    else:
         train_dataloader = v_ModelDataLoader(batch_size=args.batch_size, 
                                        o_size=args.o_size, 
                                        n_size=args.n_size,
                                        augment=augment,
                                        mode=mode)
         test_dataloader  = v_ModelDataLoader(batch_size=args.batch_size, 
+                                       o_size=args.o_size, 
+                                       n_size=args.n_size, 
+                                       mode=mode,
+                                       test=True)
+    else:
+        train_dataloader = ModelDataLoader(batch_size=args.batch_size, 
+                                       o_size=args.o_size, 
+                                       n_size=args.n_size,
+                                       augment=augment,
+                                       mode=mode)
+        test_dataloader  = ModelDataLoader(batch_size=args.batch_size, 
                                        o_size=args.o_size, 
                                        n_size=args.n_size, 
                                        mode=mode,
