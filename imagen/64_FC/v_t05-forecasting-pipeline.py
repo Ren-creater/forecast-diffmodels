@@ -90,9 +90,9 @@ for satmap_idx in tqdm(range(start, start+horizon)):
     era5_64 = torch.from_numpy(era5_64)
     era5_64_seq = torch.cat([era5_64_seq, era5_64.unsqueeze(0)])
     
-    # era5_128 = skimage.transform.resize(era5, (3, 128, 128), anti_aliasing=True)
-    # era5_128 = torch.from_numpy(era5_128)
-    # era5_128_seq = torch.cat([era5_128_seq, era5_128.unsqueeze(0)])
+    era5_128 = skimage.transform.resize(era5, (3, 128, 128), anti_aliasing=True)
+    era5_128 = torch.from_numpy(era5_128)
+    era5_128_seq = torch.cat([era5_128_seq, era5_128.unsqueeze(0)])
     
     # if satmap_idx == start: 
     #     era5_tp = cyclone.get_era5_tp_data(era5_idx)
@@ -110,9 +110,9 @@ for satmap_idx in tqdm(range(start, start+horizon)):
 
 print("Forecast generation completed.")
 
-# print("Performing super-resolution to 128x128 ...")
-# sr_images = srdiff_model.get_sampled_images(img_64_seq, era5_128_seq)
-# print("Super resolution completed.")
+print("Performing super-resolution to 128x128 ...")
+sr_images = srdiff_model.get_sampled_images(img_64_seq, era5_128_seq)
+print("Super resolution completed.")
 
 # print("Generating 64x64 precipitation maps ...")
 # tp_images = tpdiff_model.get_sampled_images(img_64_seq, era5_64_seq)
@@ -142,7 +142,7 @@ for satmap_idx in tqdm(range(start, start+horizon), disable=True):
 
     dates.append(cyclone.metadata['satmaps'][satmap_idx]['date'])
 
-tp_images[0] = actual_era5_tp[0]
+# tp_images[0] = actual_era5_tp[0]
 print("Actual data loaded.")
 
 def update(frame_idx):

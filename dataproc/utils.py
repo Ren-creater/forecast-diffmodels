@@ -486,7 +486,7 @@ class ModelDataLoader:
 class v_ModelDataLoader(ModelDataLoader):
     def __init__(self, batch_size, o_size=64, n_size=128, 
                  augment=False, 
-                 test=False, mode="fc", shuffle=True
+                 test=False, mode="sr", shuffle=True
                  ):
         self.batch_size = batch_size
         self.shuffle = shuffle        
@@ -557,7 +557,7 @@ class v_ModelDataLoader(ModelDataLoader):
                 self.vid_cond = torch.cat((self.vid_cond, era5[i:i+1, 0:1, :, :].squeeze(0)), 0)
             if self.mode == "sr":
                 self.vid = torch.cat((self.vid, img_n[i:i+8, :, :].unsqueeze(0)), 0)
-                self.vid_cond = torch.cat((self.vid_cond, img_o[i:i+8, :, :].squeeze(0)), 0)
+                self.vid_cond = torch.cat((self.vid_cond, img_o[i:i+8, :, :].unsqueeze(0)), 0)
             self.era5_vid = torch.cat((self.era5_vid, (era5[i:i+8, 1:, :, :].unsqueeze(0)).permute(0, 2, 1, 3, 4)), 0)
         start = size+1
         end = era5.shape[0]

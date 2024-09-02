@@ -16,7 +16,9 @@ from torch import optim
 import logging
 from torch.utils.tensorboard import SummaryWriter
 
-RUN_NAME = "64_128"
+from einops import rearrange
+
+RUN_NAME = "v_64_128_3e-4"
 BASE_DIR = f"/rds/general/user/zr523/home/researchProject/models/{RUN_NAME}"
 
 os.makedirs(BASE_DIR, exist_ok=True)
@@ -45,14 +47,14 @@ sys.path.append("../")
 sys.path.append("../imagen/")
 
 from helpers import *
-from imagen_pytorch import Unet, Imagen, ImagenTrainer, NullUnet
+from imagen_pytorch import Unet3D, Imagen, ImagenTrainer, NullUnet
 
 from functools import partialmethod
 tqdm.__init__ = partialmethod(tqdm.__init__, disable=True)
 
 unet1 = NullUnet()  
 
-unet2 = Unet(
+unet2 = Unet3D(
     dim = 32,
     cond_dim = 1024,
     dim_mults = (1, 2, 4, 8),
@@ -116,8 +118,8 @@ def train(args):
 
         for i, (vid_cond, vid_64, era5) in enumerate(pbar):            
             cond_embeds = era5.reshape(1, -1).float().cuda()                        
-            loss = trainer(vid_64,
-                           cond_video_frames=vid_cond,
+            loss = trainer(
+                           images=vid_cond,
                            continuous_embeds=cond_embeds,
                            unet_number=k,
                            ignore_time=False)
@@ -143,18 +145,33 @@ def train(args):
         if args.sample:
             logging.info(f"Starting sampling for epoch {epoch}:") ; l = len(test_dataloader)
             random_batch = test_dataloader.random_idx[random_batch_idx][0]
-            img_64, img_128, era5 = test_dataloader.get_batch(random_batch)
-            era5 = era5.reshape(era5.shape[0], -1)
+            vid_cond, vid, era5 = test_dataloader.get_batch(random_batch)
+            
+            cond_embeds = era5.reshape(1, -1).float().cuda()
+            ema_sampled_vid = imagen.sample(
+                        batch_size = vid.shape[0],#img_64.shape[0],
+                        start_at_unet_number = 2,              
+                        start_image_or_video = vid_cond,          
+                        cond_scale = 3.,
+                        continuous_embeds=cond_embeds,
+                        use_tqdm = False,
+                )
+            #ema_sampled_vid = ema_sampled_vid.squeeze(0)
+            ema_sampled_images = rearrange(ema_sampled_vid, 'b c t h w -> (b t) c h w')
+            vid = rearrange(vid, 'b c t h w -> (b t) c h w')
+            save_images_v2(test_dataloader, vid, ema_sampled_images, os.path.join(f"{BASE_DIR}/results", args.run_name, f"{epoch}_ema.jpg"))
+            # img_64, img_128, era5 = test_dataloader.get_batch(random_batch)
+            # era5 = era5.reshape(era5.shape[0], -1)
         
-            ema_sampled_images = imagen.sample(
-                    batch_size = img_64.shape[0],
-                    start_at_unet_number = 2,              
-                    start_image_or_video = img_64.float().cuda(),
-                    cond_scale = 3.,
-                    continuous_embeds=era5.float().cuda(),
-                    use_tqdm = False
-            )
-            save_images_v2(test_dataloader, img_128, ema_sampled_images, os.path.join(f"{BASE_DIR}/results", args.run_name, f"{epoch}_ema.jpg"))
+            # ema_sampled_images = imagen.sample(
+            #         batch_size = img_64.shape[0],
+            #         start_at_unet_number = 2,              
+            #         start_image_or_video = img_64.float().cuda(),
+            #         cond_scale = 3.,
+            #         continuous_embeds=era5.float().cuda(),
+            #         use_tqdm = False
+            # )
+            # save_images_v2(test_dataloader, img_128, ema_sampled_images, os.path.join(f"{BASE_DIR}/results", args.run_name, f"{epoch}_ema.jpg"))
             logging.info(f"Completed sampling for epoch {epoch}.")
                 
 import argparse
@@ -166,10 +183,10 @@ class DDPMArgs:
 args = DDPMArgs()
 args.run_name = RUN_NAME
 args.epochs = int(cmd_args.epochs)
-args.batch_size = 16
+args.batch_size = 1
 args.image_size = 64 ; args.o_size = 64 ; args.n_size = 128 ;
-args.continuous_embed_dim = 128*128*3
-args.dataset_path = f"/rds/general/user/zr523/home/researchProject/satellite/dataloader/{args.o_size}_{args.n_size}"
+args.continuous_embed_dim = 128*128*3*8
+args.dataset_path = f"/rds/general/ephemeral/user/zr523/ephemeral/satellite/dataloader/{args.o_size}_{args.n_size}"
 args.device = "cuda"
 args.lr = 3e-4
 args.sample = True

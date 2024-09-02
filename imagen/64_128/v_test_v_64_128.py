@@ -18,10 +18,10 @@ torch.manual_seed(seed_value)
 if torch.cuda.is_available(): torch.cuda.manual_seed_all(seed_value)
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-run_name', help='Specify the run name (for eg. 64_FC_3e-4)')
+parser.add_argument('-run_name', help='Specify the run name (for eg. 64_128_rot904_sep_3e-4)')
 args = parser.parse_args()
 
-sys.stdout = open(f'v_FC_TEST_METRICS_LOG_{datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")}.log','wt')
+sys.stdout = open(f'TEST_METRICS_LOG_{datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")}.log','wt')
 print = partial(print, flush=True)
 tqdm.__init__ = partialmethod(tqdm.__init__, disable=True)
 
@@ -31,21 +31,27 @@ BASE_DIR = f"/rds/general/user/zr523/home/researchProject/models/{RUN_NAME}/mode
 print(f"Run name: {RUN_NAME}")
 
 best_epoch_dict = {
-    "64_FC_rot904_sep_3e-4": 180,
-    "64_FC_rot904_3e-4": 240,
-    "64_FC_3e-4": 235,
-    "v_64_FC_3e-4": 235
+    "64_128_1e-5": 45,
+    "64_128_1e-4": 240,
+    "64_128_3e-4": 220,    
+    "64_128_1k_3e-4": 255,
+    "64_128_rot904_3e-4": 85,
+    "64_128_sep_3e-4": 220,
+    "64_128_rot904_sep_3e-4": 135,
+    "v_64_128_3e-4": 220
 }
 
-unet1 = Unet3D(
+unet1 = NullUnet()  
+
+unet2 = Unet3D(
     dim = 32,
     cond_dim = 1024,
     dim_mults = (1, 2, 4, 8),
-    num_resnet_blocks = 3,
-    layer_attns = (False, True, True, True),
-)  
-
-unets = [unet1]
+    num_resnet_blocks = (2, 4, 8, 8),
+    layer_attns = (False, False, False, True),
+    layer_cross_attns = (False, False, False, True)
+)
+unets = [unet1, unet2]
 
 class DDPMArgs:
     def __init__(self):
@@ -54,13 +60,12 @@ class DDPMArgs:
 args = DDPMArgs()
 args.batch_size = 1
 args.image_size = 64 ; args.o_size = 64 ; args.n_size = 128 ;
-args.continuous_embed_dim = 64*64*3*8
-args.dataset_path = f"/rds/general/ephemeral/user/zr523/ephemeral/satellite/dataloader/{args.o_size}_FC"
+args.continuous_embed_dim = 128*128*3*8
+args.dataset_path = f"/rds/general/ephemeral/user/zr523/ephemeral/satellite/dataloader/{args.o_size}_{args.n_size}"
 args.datalimit = False
-args.lr = 3e-4
-args.mode = "fc"
+args.lr = float(RUN_NAME.split('_')[-1])
 
-train_dataloader, test_dataloader = get_satellite_data(args, "vid")
+train_dataloader, test_dataloader = get_satellite_data(args)
 _ = len(train_dataloader) ; _ = len(test_dataloader)
 
 print("Dataloaders loaded.")
@@ -72,8 +77,8 @@ else:
 
 imagen = Imagen(
     unets = unets,
-    image_sizes = (64),
-    timesteps = 250,
+    image_sizes = (64, 128),
+    timesteps = timesteps,
     cond_drop_prob = 0.1,
     condition_on_continuous = True,
     continuous_embed_dim = args.continuous_embed_dim,
@@ -90,7 +95,7 @@ metric_dict = {
 
 test_metric_dict = copy.deepcopy(metric_dict)
 best_epoch = best_epoch_dict[RUN_NAME]
-ckpt_trainer_path = f"{BASE_DIR}/ckpt_trainer_1_{best_epoch:03}.pt"
+ckpt_trainer_path = f"{BASE_DIR}/ckpt_trainer_2_{best_epoch:03}.pt"
 trainer = ImagenTrainer(imagen, lr=args.lr, verbose=False).cuda()
 trainer.load(ckpt_trainer_path) 
 
@@ -100,40 +105,37 @@ for idx in range(len(test_dataloader)):
     print(f"Evaluating batch idx {idx} ...")
     
     batch_idx = test_dataloader.random_idx[idx]
+    #img_64, img_128, era5 = test_dataloader.get_batch(batch_idx)
+    # era5 = era5.reshape(era5.shape[0], -1)
+    # ema_sampled_images = imagen.sample(
+    #     batch_size = img_64.shape[0],
+    #     start_at_unet_number = 2,              
+    #     start_image_or_video = img_64.float().cuda(),
+    #     cond_scale = 3.,
+    #     continuous_embeds=era5.float().cuda(),
+    #     use_tqdm = False
+    # )
+
     vid_cond, vid, era5 = test_dataloader.get_batch(batch_idx)
-        
+            
     cond_embeds = era5.reshape(1, -1).float().cuda()
     ema_sampled_vid = imagen.sample(
-                    batch_size = vid.shape[0],#img_64.shape[0],          
-                    cond_scale = 3.,
-                    continuous_embeds=cond_embeds,
-                    use_tqdm = False,
-                    video_frames = vid.shape[2],
-                    cond_video_frames=vid_cond
-            )
+                        batch_size = vid.shape[0],#img_64.shape[0],
+                        start_at_unet_number = 2,              
+                        start_image_or_video = vid_cond,          
+                        cond_scale = 3.,
+                        continuous_embeds=cond_embeds,
+                        use_tqdm = False,
+                )
     #ema_sampled_vid = ema_sampled_vid.squeeze(0)
     ema_sampled_images = rearrange(ema_sampled_vid, 'b c t h w -> (b t) c h w')
-    img_64 = rearrange(vid, 'b c t h w -> (b t) c h w')
-    
-    y_true = img_64.cpu()
+    img_128 = rearrange(vid, 'b c t h w -> (b t) c h w')
+
+    y_true = img_128.cpu()
     y_pred = ema_sampled_images.cpu()
     metric_dict = calculate_metrics(y_pred, y_true)
     for key in metric_dict.keys():
         test_metric_dict[key].append(metric_dict[key])
-
-print("individual")
-print(test_metric_dict)
-# Initialize a dictionary to store the averages
-average_metric_dict = {}
-
-# Iterate over each key in the dictionary
-for key, values in test_metric_dict.items():
-    # Calculate the average for the current key
-    average_metric_dict[key] = sum(values) / len(values)
-
-# Now average_metric_dict will contain the average values for each key
-print("average")
-print(average_metric_dict)
 
 with open(f"/rds/general/user/zr523/home/researchProject/models/{RUN_NAME}/metrics_test.pkl", "wb") as file:
     pickle.dump(test_metric_dict, file)

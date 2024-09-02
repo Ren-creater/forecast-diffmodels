@@ -153,7 +153,7 @@ args.epochs = int(cmd_args.epochs)
 args.batch_size = 16
 args.image_size = 64 ; args.o_size = 64 ; args.n_size = 128 ;
 args.continuous_embed_dim = 64*64*4
-args.dataset_path = f"/rds/general/user/zr523/home/researchProject/satellite/dataloader/{args.o_size}_PRP"
+args.dataset_path = f"/rds/general/ephemeral/user/zr523/ephemeral/satellite/dataloader/{args.o_size}_PRP"
 args.device = "cuda"
 args.lr = 3e-4
 args.sample = True

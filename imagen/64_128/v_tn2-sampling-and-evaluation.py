@@ -2,6 +2,7 @@ import glob
 import copy
 import argparse
 from functools import partial, partialmethod
+from einops import rearrange
 
 import sys
 sys.path.append("../")
@@ -17,7 +18,7 @@ torch.manual_seed(seed_value)
 if torch.cuda.is_available(): torch.cuda.manual_seed_all(seed_value)
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-run_name', help='Specify the run name (for eg. 64_PRP_nio_rot904_3e-4)')
+parser.add_argument('-run_name', help='Specify the run name (for eg. 64_128_nio_rot904_sep_3e-4)')
 args = parser.parse_args()
 
 sys.stdout = open(f'METRICS_LOG_{datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")}.log','wt')
@@ -25,34 +26,35 @@ print = partial(print, flush=True)
 tqdm.__init__ = partialmethod(tqdm.__init__, disable=True)
 
 RUN_NAME = args.run_name
-BASE_DIR = f"/rds/general/user/zr523/home/researchProject/models/{RUN_NAME}/models/64_PRP/"
+BASE_DIR = f"/rds/general/user/zr523/home/researchProject/models/{RUN_NAME}/models/{RUN_NAME}/"
 
 print(f"Run name: {RUN_NAME}")
 
-ckpt_files = sorted(glob.glob(BASE_DIR + "ckpt_1_*"))
-ckpt_trainer_files = sorted(glob.glob(BASE_DIR + "ckpt_trainer_1_*"))
+ckpt_files = sorted(glob.glob(BASE_DIR + "ckpt_2_*"))
+ckpt_trainer_files = sorted(glob.glob(BASE_DIR + "ckpt_trainer_2_*"))
 
-unet1 = Unet(
+unet1 = NullUnet()  
+
+unet2 = Unet(
     dim = 32,
     cond_dim = 1024,
     dim_mults = (1, 2, 4, 8),
-    num_resnet_blocks = 3,
-    layer_attns = (False, True, True, True),
-)  
-
-unets = [unet1]
+    num_resnet_blocks = (2, 4, 8, 8),
+    layer_attns = (False, False, False, True),
+    layer_cross_attns = (False, False, False, True)
+)
+unets = [unet1, unet2]
 
 class DDPMArgs:
     def __init__(self):
         pass
     
 args = DDPMArgs()
-args.batch_size = 16
+args.batch_size = 1
 args.image_size = 64 ; args.o_size = 64 ; args.n_size = 128 ;
-args.continuous_embed_dim = 64*64*4
-args.dataset_path = f"/rds/general/ephemeral/user/zr523/ephemeral/satellite/dataloader/{args.o_size}_PRP"
+args.continuous_embed_dim = 128*128*3*8
+args.dataset_path = f"/rds/general/ephemeral/user/zr523/ephemeral/satellite/dataloader/{args.o_size}_{args.n_size}"
 args.datalimit = False
-args.mode = "tp"
 args.lr = float(RUN_NAME.split('_')[-1])
 args.region = region_to_abbv["North Indian Ocean"]
 
@@ -74,8 +76,8 @@ else:
 
 imagen = Imagen(
     unets = unets,
-    image_sizes = (64),
-    timesteps = 250,
+    image_sizes = (64, 128),
+    timesteps = timesteps,
     cond_drop_prob = 0.1,
     condition_on_continuous = True,
     continuous_embed_dim = args.continuous_embed_dim,
@@ -98,6 +100,7 @@ train_test_metric_dict = {
     "oreg_test": copy.deepcopy(metric_dict)
 }
 
+
 for idx in range(len(ckpt_trainer_files)):
     ckpt_trainer_path = ckpt_trainer_files[idx]
     print(f'Evaluating {ckpt_trainer_path.split("/")[-1]} ...')
@@ -111,16 +114,23 @@ for idx in range(len(ckpt_trainer_files)):
         trainer.load(ckpt_trainer_path)  
         
         batch_idx = dataloader.random_idx[random_idx[0]]
-        img_64, _, img_tp = dataloader.get_batch(batch_idx)
-        cond_embeds = img_64.reshape(img_64.shape[0], -1).float().cuda()
-        ema_sampled_images = imagen.sample(
-                batch_size = img_64.shape[0],          
-                cond_scale = 3.,
-                continuous_embeds = cond_embeds,
-                use_tqdm = False
-            )
+
+        vid_cond, vid, era5 = test_dataloader.get_batch(batch_idx)
+            
+        cond_embeds = era5.reshape(1, -1).float().cuda()
+        ema_sampled_vid = imagen.sample(
+                        batch_size = vid.shape[0],#img_64.shape[0],
+                        start_at_unet_number = 2,              
+                        start_image_or_video = vid_cond,          
+                        cond_scale = 3.,
+                        continuous_embeds=cond_embeds,
+                        use_tqdm = False,
+                )
+        #ema_sampled_vid = ema_sampled_vid.squeeze(0)
+        ema_sampled_images = rearrange(ema_sampled_vid, 'b c t h w -> (b t) c h w')
+        img_128 = rearrange(vid, 'b c t h w -> (b t) c h w')
         
-        y_true = img_tp.cpu()
+        y_true = img_128.cpu()
         y_pred = ema_sampled_images.cpu()
         metric_dict = calculate_metrics(y_pred, y_true)
         for key in metric_dict.keys():

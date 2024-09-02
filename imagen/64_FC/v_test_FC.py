@@ -2,7 +2,6 @@ import glob
 import copy
 import argparse
 from functools import partial, partialmethod
-
 from einops import rearrange
 
 import sys
@@ -108,10 +107,10 @@ for idx in range(len(test_dataloader)):
     prev_img = vid_cond.squeeze(2).cpu()
     ema_sampled_images = torch.empty(0, vid.shape[1], vid.shape[3], vid.shape[4])
     for i in range(era5.shape[0]):
-        era5 = torch.cat([prev_img, era5[i*8:(i+1)*8]]).unsqueeze(0)
+        era5 = torch.cat([prev_img, era5[i:i+1]]).unsqueeze(0)
         cond_embeds = era5.reshape(era5.shape[0], -1).float().cuda()
         curr_img = imagen.sample(
-            batch_size = img_64.shape[0],          
+            batch_size = era5.shape[0],          
             cond_scale = 3.,
             continuous_embeds = cond_embeds,
             use_tqdm = False
