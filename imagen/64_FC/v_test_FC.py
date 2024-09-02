@@ -104,10 +104,10 @@ for idx in range(len(test_dataloader)):
 
     img_64 = rearrange(vid, 'b c t h w -> (b t) c h w')
     era5 = rearrange(era5, 'b c t h w -> (b t) c h w')
-    prev_img = vid_cond.squeeze(2).cpu()
+    prev_img = vid_cond.squeeze().cpu()
     ema_sampled_images = torch.empty(0, vid.shape[1], vid.shape[3], vid.shape[4])
     for i in range(era5.shape[0]):
-        era5 = torch.cat([prev_img, era5[i:i+1]]).unsqueeze(0)
+        era5 = torch.cat([prev_img, era5[i:i+1].squeeze()]).unsqueeze(0)
         cond_embeds = era5.reshape(era5.shape[0], -1).float().cuda()
         curr_img = imagen.sample(
             batch_size = era5.shape[0],          
