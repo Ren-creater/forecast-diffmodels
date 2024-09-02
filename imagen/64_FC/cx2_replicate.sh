@@ -14,4 +14,4 @@ cd ..
 
 cd forecast-diffmodels/imagen/64_FC
 
-python m01_64_FC.py -mode execute -epochs 130 #261
+python m01_64_FC.py -mode execute -epochs 261
