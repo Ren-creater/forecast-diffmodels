@@ -121,7 +121,7 @@ class FCDiffModel:
     
         unnormalized = normalized[0, 0, :, :]
         unnormalized = unnormalize(unnormalized, self.max_value, self.min_value)
-        return unnormalized.squeeze(0), normalized
+        return unnormalized, normalized
 
 
 class SRDiffModel:
