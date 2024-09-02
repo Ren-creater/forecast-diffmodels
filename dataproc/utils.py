@@ -555,20 +555,21 @@ class v_ModelDataLoader(ModelDataLoader):
             if self.mode == "fc":
                 self.vid = torch.cat((self.vid, img_o[i:i+8, :, :].unsqueeze(0)), 0)
                 self.vid_cond = torch.cat((self.vid_cond, era5[i:i+1, 0:1, :, :].squeeze(0)), 0)
+                self.era5_vid = torch.cat((self.era5_vid, (era5[i:i+8, 1:, :, :].unsqueeze(0)).permute(0, 2, 1, 3, 4)), 0)
             if self.mode == "sr":
                 self.vid = torch.cat((self.vid, img_n[i:i+8, :, :].unsqueeze(0)), 0)
                 self.vid_cond = torch.cat((self.vid_cond, img_o[i:i+8, :, :].unsqueeze(0)), 0)
-            self.era5_vid = torch.cat((self.era5_vid, (era5[i:i+8, 1:, :, :].unsqueeze(0)).permute(0, 2, 1, 3, 4)), 0)
+                self.era5_vid = torch.cat((self.era5_vid, (era5[i:i+8, :, :, :].unsqueeze(0)).permute(0, 2, 1, 3, 4)), 0)
         start = size+1
         end = era5.shape[0]
         if self.mode == "fc":
             self.img = torch.cat((self.img, img_o[start:end]), 0)
             self.img_cond = torch.cat((self.img_cond, era5[start:end, 0:1, :, :].squeeze(1)), 0)
+            self.era5_img = torch.cat((self.era5_img, era5[start:end, 1:, :, :]), 0)
         if self.mode == "sr":
             self.img = torch.cat((self.img, img_n[start:end]), 0)
             self.img_cond = torch.cat((self.img_cond, img_o[start:end]), 0)
-        self.era5_img = torch.cat((self.era5_img, era5[start:end, 1:, :, :]), 0)
-
+            self.era5_img = torch.cat((self.era5_img, era5[start:end, :, :, :]), 0)
         self.new_data = True
     
     def add_dataloader(self, cyclone_dataloader):
