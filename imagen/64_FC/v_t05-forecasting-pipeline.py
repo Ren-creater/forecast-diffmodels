@@ -204,4 +204,4 @@ plt.close()
 
 subject = f"[COMPLETED] Forecasts for Cyclone {name.replace('-', ' ').title()}"
 message_txt = f"""GIF Processing Completed"""
-send_txt_email(message_txt, subject)horizon
+send_txt_email(message_txt, subject)
