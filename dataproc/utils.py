@@ -93,7 +93,7 @@ class FCDiffModel:
                 condition_on_continuous = True,
                 continuous_embed_dim = 64*64*4,
             )
-            ckpt_trainer_path = f"/rds/general/user/zr523/home/researchProject/models/{self.run_name}/models/64_FC/ckpt_trainer_1_{best_epoch:03}.pt"
+            ckpt_trainer_path = f"/rds/general/user/zr523/home/researchProject/models/{self.run_name}/models/{self.run_name}/ckpt_trainer_1_{best_epoch:03}.pt"
         
         trainer = ImagenTrainer(imagen, lr=3e-4, verbose=False).cuda()
         trainer.load(ckpt_trainer_path)  
@@ -110,6 +110,18 @@ class FCDiffModel:
         sampled_image = sampled_image[0, 0, :, :]
         sampled_image = unnormalize(sampled_image, self.max_value, self.min_value)
         return sampled_image.unsqueeze(0)
+    
+    def get_both_images(self, cond_embeds):
+        normalized = self.imagen.sample(
+                batch_size = 1,          
+                cond_scale = 3.,
+                continuous_embeds=cond_embeds.float().cuda(),
+                use_tqdm = False
+            )
+    
+        unnormalized = normalized[0, 0, :, :]
+        unnormalized = unnormalize(unnormalized, self.max_value, self.min_value)
+        return unnormalized.squeeze(0), normalized
 
 
 class SRDiffModel:
@@ -492,6 +504,8 @@ class v_ModelDataLoader(ModelDataLoader):
         self.shuffle = shuffle        
         self.mode = mode
         self.modality = "img"
+        self.extremes = torch.empty((0, 1, 2), 
+                                    dtype=torch.float32)
                      
         if mode == "sr":
             self.img_cond = torch.empty((0, o_size, o_size), 
@@ -547,11 +561,12 @@ class v_ModelDataLoader(ModelDataLoader):
     def switch_to_vid(self):
         self.modality = "vid"
 
-    def add_vid(self, img_o, img_n, era5):
+    def add_vid(self, img_o, img_n, era5, extreme):
         size = era5.shape[0]
         if size % 8 != 0:
             size -= size % 8
         for i in range(0, size, 8):
+            self.extremes = torch.cat((self.extremes, extreme.unsqueeze(0)), 0)
             if self.mode == "fc":
                 self.vid = torch.cat((self.vid, img_o[i:i+8, :, :].unsqueeze(0)), 0)
                 self.vid_cond = torch.cat((self.vid_cond, era5[i:i+1, 0:1, :, :].squeeze(0)), 0)
@@ -586,7 +601,9 @@ class v_ModelDataLoader(ModelDataLoader):
             img_n = cyclone_dataloader.img_128
             era5  = cyclone_dataloader.era5
         #self.add_image(img_o, img_n, era5)
-        self.add_vid(img_o, img_n, era5)
+        img = cyclone_dataloader.img_64
+        extreme = torch.tensor([img.max(), img.min()])
+        self.add_vid(img_o, img_n, era5, extreme)
 
     def create_batches(self, batch_size, perform_augmentation=True):
         if self.augment and perform_augmentation and (self.test == False): self.add_rotations()
@@ -616,6 +633,9 @@ class v_ModelDataLoader(ModelDataLoader):
             else:
                 return self._to3channel(self.img_cond[idx]).unsqueeze(2).float().cuda(), self._to3channel(self.img[idx]).unsqueeze(2), self.zero_pad(self.era5_img[idx])
             #return self._to3channel(self.img_o[idx]), self.img_n[idx], self.era5[idx]
+
+    def get_extreme(self, idx):
+        return self.extremes[idx]
     
     def zero_pad(self, x):
         padding = (0, 0, 0, 0, 0, 7)

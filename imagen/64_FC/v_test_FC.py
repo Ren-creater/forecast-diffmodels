@@ -104,19 +104,16 @@ for idx in range(len(test_dataloader)):
 
     img_64 = rearrange(vid, 'b c t h w -> (b t) c h w')
     era5 = rearrange(era5, 'b c t h w -> (b t) c h w')
-    prev_img = vid_cond.squeeze().cpu()
+    
     ema_sampled_images = torch.empty(0, vid.shape[1], vid.shape[3], vid.shape[4])
+    fcdiff_model = FCDiffModel("64_FC_3e-4", test_dataloader.get_extreme(batch_idx))
+    prev_img = unnormalize(vid_cond[0, 0, 0, :, :].squeeze().cpu(), fcdiff_model.max_value, fcdiff_model.min_value).unsqueeze(0)
     for i in range(era5.shape[0]):
-        era5 = torch.cat([prev_img, era5[i:i+1].squeeze()]).unsqueeze(0)
+        era5 = torch.cat([prev_img, era5[i:i+1].squeeze(0)]).unsqueeze(0)
         cond_embeds = era5.reshape(era5.shape[0], -1).float().cuda()
-        curr_img = imagen.sample(
-            batch_size = era5.shape[0],          
-            cond_scale = 3.,
-            continuous_embeds = cond_embeds,
-            use_tqdm = False
-        )
-        ema_sampled_images = torch.cat([ema_sampled_images, curr_img])
-        prev_img = curr_img.cpu()
+        unnormalized, normalized = fcdiff_model.get_both_images(cond_embeds)
+        ema_sampled_images = torch.cat([ema_sampled_images, normalized])
+        prev_img = unnormalized.cpu()
 
     y_true = img_64.cpu()
     y_pred = ema_sampled_images.cpu()
