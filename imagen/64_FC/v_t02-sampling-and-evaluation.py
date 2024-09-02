@@ -27,7 +27,7 @@ print = partial(print, flush=True)
 tqdm.__init__ = partialmethod(tqdm.__init__, disable=True)
 
 RUN_NAME = args.run_name
-BASE_DIR = f"/rds/general/user/zr523/home/researchProject/models/{RUN_NAME}/models/64_FC/"
+BASE_DIR = f"/rds/general/user/zr523/home/researchProject/models/{RUN_NAME}/models/{RUN_NAME}/"
 
 print(f"Run name: {RUN_NAME}")
 

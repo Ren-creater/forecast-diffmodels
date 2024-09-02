@@ -11,7 +11,7 @@ from tqdm import tqdm
 from utils import *
 from send_emails import send_txt_email
 
-BASE_DIR = "/rds/general/user/zr523/home/researchProject/satellite/dataloader/64_128/"
+BASE_DIR = "/vol/bitbucket/zr523/researchProject/satellite/dataloader/64_128/"
 
 import sys
 sys.stdout = open(f'DL_LOG_{datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")}.log','wt')
@@ -23,7 +23,7 @@ df = df.dropna()
 
 def is_stub_already_present(dest_folder, stub):
     stubs = [x.split('/')[-1] for x in glob.glob(dest_folder+"*.dat")]
-    if stub in stubs: 
+    if stub in stubs:
         print(f"Present: {stub}", flush=True)
         return True
     return False
@@ -34,31 +34,33 @@ def fetch_cyclone(idx):
     name = row["Name"]
     cyclone = Cyclone(region, name)
     cyclone.load_era5()
-    
+
     o_size = 64 ; n_size = 128
     data_loader = CycloneDataLoader()
 
     region = region_to_abbv[region]
     name = name.replace(' ', '').lower()
-    filename = f"{region}_{name}.dat"    
+    filename = f"{region}_{name}.dat"
 
-    if name != "bonnie" and is_stub_already_present(BASE_DIR, filename):
+    if is_stub_already_present(BASE_DIR, filename):
         return
 
     print(f"[{name.upper()}] Processing dataloader.", flush=True)
-    
+
     for satmap_idx in tqdm(range(cyclone.metadata['count']), disable=True):
         ir108_fn = cyclone.metadata['satmaps'][satmap_idx]['ir108_fn']
-        ir108_scn = cyclone.get_ir108_data(ir108_fn)    
-        img = ir108_scn.to_numpy() ; 
+        ir108_scn = cyclone.get_ir108_data(ir108_fn)
+        img = ir108_scn.to_numpy() ;
+        # Replace NaN values with 0
+        img = np.nan_to_num(img, nan=0.0)
         img = transform_make_sq_image(img)
-    
+
         img_o = skimage.transform.resize(img, (o_size, o_size), anti_aliasing=True)
-        img_o = torch.from_numpy(img_o).unsqueeze(0)        
-    
+        img_o = torch.from_numpy(img_o).unsqueeze(0)
+
         img_n = skimage.transform.resize(img, (n_size, n_size), anti_aliasing=True)
         img_n = torch.from_numpy(img_n).unsqueeze(0)
-        
+
         era5_idx = cyclone.metadata['satmaps'][satmap_idx]['era5_idx']
         era5 = cyclone.get_era5_data(era5_idx, gfs=True)
         era5 = skimage.transform.resize(era5, (3, n_size, n_size), anti_aliasing=True)
@@ -67,9 +69,9 @@ def fetch_cyclone(idx):
         if torch.isnan(img_o.sum()) or torch.isnan(img_n.sum()) or torch.isnan(era5.sum()):
             print(f"[NAN]\t{region}\t{name}\t{satmap_idx}", flush=True)
             continue
-        
+
         data_loader.add_image(img_o, img_n, era5)
-    
+
     with open(f'{BASE_DIR}{filename}', 'wb') as data_file:
         pickle.dump(data_loader, data_file)
 
@@ -88,4 +90,3 @@ pool = Pool(cpu_count())
 fetch_cyclone_func = partial(fetch_cyclone)
 results = pool.map(fetch_cyclone_func, idx)
 pool.close()
-pool.join()

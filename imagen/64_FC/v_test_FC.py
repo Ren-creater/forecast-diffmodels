@@ -27,7 +27,7 @@ print = partial(print, flush=True)
 tqdm.__init__ = partialmethod(tqdm.__init__, disable=True)
 
 RUN_NAME = args.run_name
-BASE_DIR = f"/rds/general/user/zr523/home/researchProject/models/{RUN_NAME}/models/64_FC/"
+BASE_DIR = f"/rds/general/user/zr523/home/researchProject/models/{RUN_NAME}/models/{RUN_NAME}/"
 
 print(f"Run name: {RUN_NAME}")
 
@@ -105,7 +105,7 @@ for idx in range(len(test_dataloader)):
 
     img_64 = rearrange(vid, 'b c t h w -> (b t) c h w')
     era5 = rearrange(era5, 'b c t h w -> (b t) c h w')
-    prev_img = vid_cond.unsqueeze(2).cpu()
+    prev_img = vid_cond.squeeze(2).cpu()
     ema_sampled_images = torch.empty(0, vid.shape[1], vid.shape[3], vid.shape[4])
     for i in range(era5.shape[0]):
         era5 = torch.cat([prev_img, era5[i*8:(i+1)*8]]).unsqueeze(0)
