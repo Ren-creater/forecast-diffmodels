@@ -102,14 +102,27 @@ def train(args):
         if args.shuffle_every_epoch:
             _ = len(train_dataloader) ; train_dataloader.create_batches(args.batch_size, False)
         pbar = tqdm(train_dataloader)
-        for i, (img_64, img_128, era5) in enumerate(pbar):
-            era5 = era5.reshape(era5.shape[0], -1).float().cuda()
-            img_128 = img_128.float().cuda()
-            loss = trainer(images=img_128,
-                           continuous_embeds=era5,
-                           unet_number=k)
+        # for i, (img_64, img_128, era5) in enumerate(pbar):
+        #     era5 = era5.reshape(era5.shape[0], -1).float().cuda()
+        #     img_128 = img_128.float().cuda()
+        #     loss = trainer(images=img_128,
+        #                    continuous_embeds=era5,
+        #                    unet_number=k)
+        #     trainer.update(unet_number=k)
+        if epoch > 50:
+            logging.info("Starting training on 8 frames videos")
+            train_dataloader.switch_to_vid()
+            test_dataloader.switch_to_vid()
+
+        for i, (vid_cond, vid_64, era5) in enumerate(pbar):            
+            cond_embeds = era5.reshape(1, -1).float().cuda()                        
+            loss = trainer(vid_64,
+                           cond_video_frames=vid_cond,
+                           continuous_embeds=cond_embeds,
+                           unet_number=k,
+                           ignore_time=False)
             trainer.update(unet_number=k)
-    
+
             pbar.set_postfix({f"MSE_{k}":loss})
             logger.add_scalar(f"MSE_{k}",loss, global_step=epoch*len(train_dataloader)+i)
     
