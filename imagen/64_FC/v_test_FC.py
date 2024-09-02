@@ -112,7 +112,7 @@ for idx in range(len(test_dataloader)):
         era5 = torch.cat([prev_img, era5[i:i+1].squeeze(0)]).unsqueeze(0)
         cond_embeds = era5.reshape(era5.shape[0], -1).float().cuda()
         unnormalized, normalized = fcdiff_model.get_both_images(cond_embeds)
-        ema_sampled_images = torch.cat([ema_sampled_images, normalized])
+        ema_sampled_images = torch.cat([ema_sampled_images, normalized.cpu()])
         prev_img = unnormalized.cpu()
 
     y_true = img_64.cpu()
