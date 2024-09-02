@@ -118,10 +118,14 @@ class FCDiffModel:
                 continuous_embeds=cond_embeds.float().cuda(),
                 use_tqdm = False
             )
-    
+        print("normarlized raw")
+        print(normalized.dim())
+        print(normalized.shape)
         unnormalized = normalized[0, 0, :, :]
         unnormalized = unnormalize(unnormalized, self.max_value, self.min_value)
-        return unnormalized.squeeze(0), normalized
+        print("unormalized raw")
+        print(unnormalized.dim())
+        return unnormalized, normalized
 
 
 class SRDiffModel:
