@@ -504,7 +504,7 @@ class v_ModelDataLoader(ModelDataLoader):
         self.shuffle = shuffle        
         self.mode = mode
         self.modality = "img"
-        self.extremes = torch.empty((0, 1, 2), 
+        self.extremes = torch.empty((0, 2), 
                                     dtype=torch.float32)
                      
         if mode == "sr":
