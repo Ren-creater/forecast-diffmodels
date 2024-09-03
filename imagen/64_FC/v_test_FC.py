@@ -107,7 +107,7 @@ for idx in range(len(test_dataloader)):
     
     ema_sampled_images = torch.empty(0, vid.shape[1], vid.shape[3], vid.shape[4])
     fcdiff_model = FCDiffModel("64_FC_3e-4", test_dataloader.get_extreme(batch_idx))
-    prev_img = unnormalize(vid_cond[0, 0, 0, :, :].squeeze().cpu(), fcdiff_model.max_value, fcdiff_model.min_value).unsqueeze(0)
+    prev_img = unnormalize(vid_cond[0, 0, 0, :, :].cpu(), fcdiff_model.max_value, fcdiff_model.min_value).unsqueeze(0)
     for i in range(era5.shape[0]):
         era5_64 = torch.cat([prev_img, era5[i:i+1].squeeze(0)]).unsqueeze(0)
         cond_embeds = era5_64.reshape(era5_64.shape[0], -1).float().cuda()
