@@ -104,7 +104,7 @@ def train(args):
         print(len(train_dataloader))
         print(len(test_dataloader))
         pbar = tqdm(train_dataloader)
-        if epoch > 100:
+        if epoch > 200:
             logging.info("Starting training on 8 frames videos")
             train_dataloader.switch_to_vid()
             test_dataloader.switch_to_vid()
