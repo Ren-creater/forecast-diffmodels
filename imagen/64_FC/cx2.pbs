@@ -21,3 +21,5 @@ cd forecast-diffmodels/imagen/64_FC
 #accelerate config
 
 python v_64_FC.py -mode execute -epochs 600
+
+python v_test_v_FC.py -run_name v_64_FC_3e-4
