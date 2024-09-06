@@ -18,7 +18,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from einops import rearrange
 
-RUN_NAME = "v_64_FC_3e-4_"
+RUN_NAME = "v_64_FC_3e-4"
 BASE_DIR = f"/rds/general/user/zr523/home/researchProject/models/{RUN_NAME}"
 
 os.makedirs(BASE_DIR, exist_ok=True)
@@ -99,15 +99,16 @@ def train(args):
     
     for epoch in range(start_epoch+1, args.epochs):
         logging.info(f"Starting epoch {epoch}:")
+        if epoch > 200:
+            logging.info("Starting training on 8 frames videos")
+            train_dataloader.switch_to_vid()
+            test_dataloader.switch_to_vid()
+
         if args.shuffle_every_epoch:
             _ = len(train_dataloader) ; train_dataloader.create_batches(args.batch_size, False)
         print(len(train_dataloader))
         print(len(test_dataloader))
         pbar = tqdm(train_dataloader)
-        if epoch > 200:
-            logging.info("Starting training on 8 frames videos")
-            train_dataloader.switch_to_vid()
-            test_dataloader.switch_to_vid()
 
         for i, (vid_cond, vid_64, era5) in enumerate(pbar):            
             cond_embeds = era5.reshape(1, -1).float().cuda()                        
