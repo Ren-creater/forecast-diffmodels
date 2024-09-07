@@ -188,8 +188,8 @@ def FVD(y_pred, y_true):
     from fvd_metric import compute_fvd
     from einops import rearrange
     device = torch.device("cuda:0")
-    y_pred = rearrange(y_pred, 'b c h w -> 1 c t h w')
-    y_true = rearrange(y_true, 'b c h w -> 1 c t h w')
+    y_pred = rearrange(y_pred, 'b c h w -> 1 c b h w')
+    y_true = rearrange(y_true, 'b c h w -> 1 c b h w')
     output = compute_fvd(y_true, y_pred, 1, device, batch_size=1)
     return output
 
