@@ -200,7 +200,7 @@ def calculate_metrics(y_pred, y_true):
         ("mae", MAELoss),
         ("psnr", PSNR),
         ("ssim", SSIM),
-        ("fid", FID)
+        ("fid", FID),
         ("fvd", FVD)
     ]
     metric_dict = {}
