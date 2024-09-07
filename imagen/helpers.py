@@ -184,6 +184,15 @@ def FID(y_pred, y_true):
     output = fid.compute()
     return output
 
+def FVD(y_pred, y_true):
+    from fvd_metric import compute_fvd
+    from einops import rearrange
+    device = torch.device("cuda:0")
+    y_pred = rearrange(y_pred, 'b c h w -> 1 c t h w')
+    y_true = rearrange(y_true, 'b c h w -> 1 c t h w')
+    output = compute_fvd(y_true, y_pred, 1, device, batch_size=1)
+    return output
+
 def calculate_metrics(y_pred, y_true):
     fn_list = [
         ("kl_div", KL_DivLoss), 
@@ -192,6 +201,7 @@ def calculate_metrics(y_pred, y_true):
         ("psnr", PSNR),
         ("ssim", SSIM),
         ("fid", FID)
+        ("fvd", FVD)
     ]
     metric_dict = {}
     for fn_name, fn in fn_list:
