@@ -59,6 +59,8 @@ args.mode = "fc"
 args.lr = float(RUN_NAME.split('_')[-1])
 
 train_dataloader, test_dataloader = get_satellite_data(args, "vid")
+train_dataloader.switch_to_vid()
+test_dataloader.switch_to_vid()
 _ = len(train_dataloader) ; _ = len(test_dataloader)
 
 if '1k' in RUN_NAME:
@@ -90,9 +92,6 @@ train_test_metric_dict = {
     "train": copy.deepcopy(metric_dict), 
     "test": copy.deepcopy(metric_dict)
 }
-
-train_dataloader.switch_to_vid()
-test_dataloader.switch_to_vid()
 
 for idx in range(len(ckpt_trainer_files)):
     ckpt_trainer_path = ckpt_trainer_files[idx]
