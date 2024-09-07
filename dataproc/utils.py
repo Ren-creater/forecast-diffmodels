@@ -633,7 +633,7 @@ class v_ModelDataLoader(ModelDataLoader):
                 return self._to3channel(self.vid_cond[idx]).unsqueeze(2).float().cuda(), self.vid_to3channel(self.vid[idx]), self.era5_vid[idx]
             else:
                 img_cond = self._to3channel(self.img_cond[idx])
-                return img_cond.unsqueeze(2).float().cuda(), self._to3channel(self.img[idx]).unsqueeze(2), self.zero_pad(torch.cat([img_cond, self.era5_img[idx]]))
+                return img_cond.unsqueeze(2).float().cuda(), self._to3channel(self.img[idx]).unsqueeze(2), self.zero_pad(torch.stack([img_cond, self.era5_img[idx]], dim=2))
             #return self._to3channel(self.img_o[idx]), self.img_n[idx], self.era5[idx]
 
     def get_extreme(self, idx):
@@ -641,7 +641,8 @@ class v_ModelDataLoader(ModelDataLoader):
     
     def zero_pad(self, x):
         padding = (0, 0, 0, 0, 0, 7)
-        return F.pad(x.unsqueeze(2), padding)
+        return F.pad(x, padding)
+        #return F.pad(x.unsqueeze(2), padding)
 
 # ---------------------------------------------
 # Other helpful methods
