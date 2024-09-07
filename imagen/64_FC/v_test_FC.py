@@ -60,6 +60,7 @@ args.lr = 3e-4
 args.mode = "fc"
 
 train_dataloader, test_dataloader = get_satellite_data(args, "vid")
+test_dataloader.switch_to_vid()
 _ = len(train_dataloader) ; _ = len(test_dataloader)
 
 print("Dataloaders loaded.")
@@ -92,8 +93,6 @@ best_epoch = best_epoch_dict[RUN_NAME]
 ckpt_trainer_path = f"{BASE_DIR}/ckpt_trainer_1_{best_epoch:03}.pt"
 trainer = ImagenTrainer(imagen, lr=args.lr, verbose=False).cuda()
 trainer.load(ckpt_trainer_path) 
-
-test_dataloader.switch_to_vid()
 
 for idx in range(len(test_dataloader)):
     print(f"Evaluating batch idx {idx} ...")
