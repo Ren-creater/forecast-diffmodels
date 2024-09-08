@@ -113,7 +113,7 @@ def train(args):
         pbar = tqdm(train_dataloader)
 
         for i, (vid_cond, vid_64, era5) in enumerate(pbar):            
-            cond_embeds = era5.reshape(1, -1).float().cuda()                        
+            cond_embeds = era5.reshape(era5.shape[0], -1).float().cuda()                        
             loss = trainer(vid_64,
                            cond_video_frames=vid_cond,
                            continuous_embeds=cond_embeds,
