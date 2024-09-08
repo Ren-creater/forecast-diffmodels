@@ -187,11 +187,10 @@ def FID(y_pred, y_true):
 def FVD(y_pred, y_true):
     from fvd_metric import compute_fvd
     from einops import rearrange
-    import numpy as np
     device = torch.device("cuda:0")
     y_pred = rearrange(y_pred, 'b c h w -> 1 c b h w')
     y_true = rearrange(y_true, 'b c h w -> 1 c b h w')
-    output = compute_fvd(np.array(y_true), np.array(y_pred), 1, device, batch_size=1)
+    output = compute_fvd(y_true, y_pred, 1, device, batch_size=1)
     return output
 
 def calculate_metrics(y_pred, y_true):
