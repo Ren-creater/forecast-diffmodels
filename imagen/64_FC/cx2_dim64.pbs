@@ -22,8 +22,8 @@ cd forecast-diffmodels/imagen/64_FC
 
 python v_64_FC.py -mode execute -epochs 400
 
-python v_test_v_FC.py -run_name v_64_FC_3e-4
+python v_test_v_FC_dim64.py -run_name v_64_FC_3e-4_dim64
 
-python v_t02-sampling-and-evaluation.py -run_name v_64_FC_3e-4
+# python v_t02-sampling-and-evaluation.py -run_name v_64_FC_3e-4_dim64
 
-jupyter nbconvert --execute --to notebook 'v_T03 - Visualizing Metrics.ipynb'
+# jupyter nbconvert --execute --to notebook 'v_T03 - Visualizing Metrics.ipynb'

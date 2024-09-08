@@ -18,7 +18,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from einops import rearrange
 
-RUN_NAME = "v_64_FC_3e-4"
+RUN_NAME = "v_64_FC_3e-4_dim64"
 BASE_DIR = f"/rds/general/user/zr523/home/researchProject/models/{RUN_NAME}"
 
 os.makedirs(BASE_DIR, exist_ok=True)
@@ -53,7 +53,7 @@ from functools import partialmethod
 tqdm.__init__ = partialmethod(tqdm.__init__, disable=True)
 
 unet1 = Unet3D(
-    dim = 32,
+    dim = 64,
     cond_dim = 1024,
     dim_mults = (1, 2, 4, 8),
     num_resnet_blocks = 3,
