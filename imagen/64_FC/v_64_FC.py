@@ -100,9 +100,11 @@ def train(args):
     for epoch in range(start_epoch+1, args.epochs):
         logging.info(f"Starting epoch {epoch}:")
         if epoch > 200:
-            logging.info("Starting training on 8 frames videos")
+            logging.info("Starting training on 10 frames videos")
             train_dataloader.switch_to_vid()
             test_dataloader.switch_to_vid()
+            train_dataloader.create_batches(args.batch_size, False)
+            test_dataloader.create_batches(args.batch_size, False)
 
         if args.shuffle_every_epoch:
             _ = len(train_dataloader) ; train_dataloader.create_batches(args.batch_size, False)
@@ -165,14 +167,14 @@ class DDPMArgs:
 args = DDPMArgs()
 args.run_name = RUN_NAME
 args.epochs = int(cmd_args.epochs)
-args.batch_size = 1
+args.batch_size = 8
 args.image_size = 64 ; args.o_size = 64 ; args.n_size = 128 ;
 #changed from 4 to 3 below, and * args.batch_size
-args.continuous_embed_dim = 64*64*3*9
+args.continuous_embed_dim = 64*64*3*11
 args.dataset_path = f"/rds/general/ephemeral/user/zr523/ephemeral/satellite/dataloader/{args.o_size}_FC"
 args.device = "cuda"
 args.lr = 3e-4
-args.sample = True
+args.sample = False#True
 args.datalimit = False
 args.augment = False#True
 args.mode = "fc"

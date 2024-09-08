@@ -201,7 +201,7 @@ def calculate_metrics(y_pred, y_true):
         ("psnr", PSNR),
         ("ssim", SSIM),
         ("fid", FID),
-        #("fvd", FVD)
+        ("fvd", FVD)
     ]
     metric_dict = {}
     for fn_name, fn in fn_list:

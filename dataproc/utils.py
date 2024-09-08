@@ -494,7 +494,7 @@ class ModelDataLoader:
         if self.mode == "fc":
             return self._to3channel(self.img_o[idx]), self.img_n[idx], self.era5[idx]
 
-
+t = 10
 class v_ModelDataLoader(ModelDataLoader):
     def __init__(self, batch_size, o_size=64, n_size=128, 
                  augment=False, 
@@ -538,9 +538,9 @@ class v_ModelDataLoader(ModelDataLoader):
                                     dtype=torch.float32)
             self.vid_cond = torch.empty((0, o_size, o_size), 
                                     dtype=torch.float32)
-            self.vid = torch.empty((0, 8, o_size, o_size), 
+            self.vid = torch.empty((0, t, o_size, o_size), 
                                     dtype=torch.float32)
-            self.era5_vid = torch.empty((0, 3, 9, o_size, o_size), 
+            self.era5_vid = torch.empty((0, 3, t+1, o_size, o_size), 
                                     dtype=torch.float32)
         self.new_data = True
         self.test = test
@@ -563,19 +563,19 @@ class v_ModelDataLoader(ModelDataLoader):
 
     def add_vid(self, img_o, img_n, era5, extreme):
         size = era5.shape[0]
-        if size % 8 != 0:
-            size -= size % 8
-        for i in range(0, size, 8):
+        if size % t != 0:
+            size -= size % t
+        for i in range(0, size, t):
             self.extremes = torch.cat((self.extremes, extreme.unsqueeze(0)), 0)
             if self.mode == "fc":
-                self.vid = torch.cat((self.vid, img_o[i:i+8, :, :].unsqueeze(0)), 0)
+                self.vid = torch.cat((self.vid, img_o[i:i+t, :, :].unsqueeze(0)), 0)
                 vid_cond = era5[i:i+1, 0:1, :, :]
                 self.vid_cond = torch.cat((self.vid_cond, vid_cond.squeeze(0)), 0)
-                self.era5_vid = torch.cat((self.era5_vid, (torch.cat([self._to3channel(vid_cond.squeeze(1)), era5[i:i+8, 1:, :, :]]).unsqueeze(0)).permute(0, 2, 1, 3, 4)), 0)
+                self.era5_vid = torch.cat((self.era5_vid, (torch.cat([self._to3channel(vid_cond.squeeze(1)), era5[i:i+t, 1:, :, :]]).unsqueeze(0)).permute(0, 2, 1, 3, 4)), 0)
             if self.mode == "sr":
-                self.vid = torch.cat((self.vid, img_n[i:i+8, :, :].unsqueeze(0)), 0)
-                self.vid_cond = torch.cat((self.vid_cond, img_o[i:i+8, :, :].unsqueeze(0)), 0)
-                self.era5_vid = torch.cat((self.era5_vid, (era5[i:i+8, :, :, :].unsqueeze(0)).permute(0, 2, 1, 3, 4)), 0)
+                self.vid = torch.cat((self.vid, img_n[i:i+t, :, :].unsqueeze(0)), 0)
+                self.vid_cond = torch.cat((self.vid_cond, img_o[i:i+t, :, :].unsqueeze(0)), 0)
+                self.era5_vid = torch.cat((self.era5_vid, (era5[i:i+t, :, :, :].unsqueeze(0)).permute(0, 2, 1, 3, 4)), 0)
         start = 0#size+1
         end = era5.shape[0]
         if self.mode == "fc":

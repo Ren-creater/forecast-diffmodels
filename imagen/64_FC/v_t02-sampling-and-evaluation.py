@@ -52,7 +52,7 @@ class DDPMArgs:
 args = DDPMArgs()
 args.batch_size = 1
 args.image_size = 64 ; args.o_size = 64 ; args.n_size = 128 ;
-args.continuous_embed_dim = 64*64*3*8
+args.continuous_embed_dim = 64*64*3*9
 args.dataset_path = f"/rds/general/ephemeral/user/zr523/ephemeral/satellite/dataloader/{args.o_size}_FC"
 args.datalimit = False
 args.mode = "fc"
