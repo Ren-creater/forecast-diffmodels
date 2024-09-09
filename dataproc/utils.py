@@ -494,7 +494,7 @@ class ModelDataLoader:
         if self.mode == "fc":
             return self._to3channel(self.img_o[idx]), self.img_n[idx], self.era5[idx]
 
-t = 12
+t = 11
 class v_ModelDataLoader(ModelDataLoader):
     def __init__(self, batch_size, o_size=64, n_size=128, 
                  augment=False, 
