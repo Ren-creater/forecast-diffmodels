@@ -21,11 +21,12 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-run_name', help='Specify the run name (for eg. 64_FC_3e-4)')
 args = parser.parse_args()
 
-sys.stdout = open(f'v_FC_TEST_METRICS_LOG_{datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")}.log','wt')
+RUN_NAME = args.run_name
+sys.stdout = open(f'{RUN_NAME}_TEST_METRICS_LOG_{datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")}.log','wt')
 print = partial(print, flush=True)
 tqdm.__init__ = partialmethod(tqdm.__init__, disable=True)
 
-RUN_NAME = args.run_name
+
 BASE_DIR = f"/rds/general/user/zr523/home/researchProject/models/{RUN_NAME}/models/{RUN_NAME}/"
 
 print(f"Run name: {RUN_NAME}")
