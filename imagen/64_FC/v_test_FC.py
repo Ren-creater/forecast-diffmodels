@@ -85,7 +85,8 @@ metric_dict = {
     "mae":  [],
     "psnr": [],
     "ssim": [],
-    "fid": []
+    "fid": [],
+    "fvd": []
 }
 
 test_metric_dict = copy.deepcopy(metric_dict)
