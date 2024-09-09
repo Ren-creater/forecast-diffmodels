@@ -185,12 +185,14 @@ def FID(y_pred, y_true):
     return output
 
 def FVD(y_pred, y_true):
-    from fvd_metric import compute_fvd
+    #from fvd_metric import compute_fvd
+    from common_metrics_on_video_quality.calculate_fvd import calculate_fvd
     from einops import rearrange
     device = torch.device("cuda:0")
-    y_pred = rearrange(y_pred, 'b c h w -> 1 c b h w')
-    y_true = rearrange(y_true, 'b c h w -> 1 c b h w')
-    output = compute_fvd(y_true, y_pred, 1, device, batch_size=1)
+    y_pred = rearrange(y_pred, 'b c h w -> 1 b c h w')
+    y_true = rearrange(y_true, 'b c h w -> 1 b c h w')
+    #output = compute_fvd(y_true, y_pred, 1, device, batch_size=1)
+    output = calculate_fvd(y_true, y_pred, device, method='styleganv')
     return output
 
 def calculate_metrics(y_pred, y_true):
