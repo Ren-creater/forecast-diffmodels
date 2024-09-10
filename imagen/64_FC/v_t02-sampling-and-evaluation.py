@@ -85,7 +85,8 @@ metric_dict = {
     "mae":  [],
     "psnr": [],
     "ssim": [],
-    "fid": []
+    "fid": [],
+    "fvd": []
 }
 
 train_test_metric_dict = {
