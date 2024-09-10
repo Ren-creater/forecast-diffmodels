@@ -192,8 +192,10 @@ def FVD(y_pred, y_true):
     y_pred = rearrange(y_pred, 'b c h w -> 1 b c h w')
     y_true = rearrange(y_true, 'b c h w -> 1 b c h w')
     #output = compute_fvd(y_true, y_pred, 1, device, batch_size=1)
-    output = calculate_fvd(y_true, y_pred, device, method='styleganv')
-    return output
+    output = calculate_fvd(y_true, y_pred, device, method='styleganv')["value"]
+    values_list = list(output.values())
+    average = sum(values_list) / len(values_list)
+    return average
 
 def calculate_metrics(y_pred, y_true):
     fn_list = [
