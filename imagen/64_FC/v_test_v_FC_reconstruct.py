@@ -21,7 +21,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-run_name', help='Specify the run name (for eg. 64_FC_3e-4)')
 args = parser.parse_args()
 
-sys.stdout = open(f'v_FC_TEST_METRICS_LOG_{datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")}.log','wt')
+sys.stdout = open(f'reconstruct_v_FC_TEST_METRICS_LOG_{datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")}.log','wt')
 print = partial(print, flush=True)
 tqdm.__init__ = partialmethod(tqdm.__init__, disable=True)
 
@@ -108,7 +108,8 @@ for idx in range(len(test_dataloader)):
                     continuous_embeds=cond_embeds,
                     use_tqdm = False,
                     video_frames = vid.shape[2],
-                    cond_video_frames=vid_cond
+                    cond_video_frames=vid_cond,
+                    wr_scale = 50.
             )
     #ema_sampled_vid = ema_sampled_vid.squeeze(0)
     ema_sampled_images = rearrange(ema_sampled_vid, 'b c t h w -> (b t) c h w')
