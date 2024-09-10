@@ -7,7 +7,6 @@ eval "$(~/anaconda3/bin/conda shell.bash hook)"
 source activate research_env
 
 #conda install python=3.10.12
-#pip install scipy==1.9.3
 #python3 -m pip install -r /rds/general/user/zr523/home/researchProject/forecast-diffmodels/imagen/requirements.txt
 
 cd /rds/general/user/zr523/home/researchProject/

@@ -14,8 +14,4 @@ cd ..
 
 cd forecast-diffmodels/imagen/64_FC
 
-#pip install torchmetrics[image]
-pi install scipy==1.7.3
-pip install lpips
-
 python v_test_FC.py -run_name 64_FC_3e-4
