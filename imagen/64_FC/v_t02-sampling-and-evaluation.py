@@ -56,7 +56,7 @@ args.continuous_embed_dim = 64*64*3*11
 args.dataset_path = f"/rds/general/ephemeral/user/zr523/ephemeral/satellite/dataloader/{args.o_size}_FC"
 args.datalimit = False
 args.mode = "fc"
-args.lr = float(RUN_NAME.split('_')[-1])
+args.lr = 3e-4#float(RUN_NAME.split('_')[-1])
 
 train_dataloader, test_dataloader = get_satellite_data(args, "vid")
 train_dataloader.switch_to_vid()

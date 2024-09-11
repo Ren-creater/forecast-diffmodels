@@ -18,7 +18,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from einops import rearrange
 
-RUN_NAME = "v_64_FC_3e-4_dim64"
+RUN_NAME = "v_64_FC_3e-4_dim64_img"
 BASE_DIR = f"/rds/general/user/zr523/home/researchProject/models/{RUN_NAME}"
 
 os.makedirs(BASE_DIR, exist_ok=True)
