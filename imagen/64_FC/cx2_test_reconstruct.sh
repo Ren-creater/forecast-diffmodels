@@ -14,4 +14,4 @@ cd ..
 
 cd forecast-diffmodels/imagen/64_FC
 
-python v_test_v_FC_reconstruct.py -run_name v_64_FC_3e-4
+python v_test_v_FC_reconstruct.py -run_name v_64_FC_3e-4_dim64
