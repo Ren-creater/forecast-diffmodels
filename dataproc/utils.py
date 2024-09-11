@@ -560,6 +560,9 @@ class v_ModelDataLoader(ModelDataLoader):
 
     def switch_to_vid(self):
         self.modality = "vid"
+    
+    def switch_to_img(self):
+        self.modality = "img"
 
     def add_vid(self, img_o, img_n, era5, extreme):
         size = era5.shape[0]

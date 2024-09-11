@@ -36,7 +36,7 @@ ckpt_trainer_files = sorted(glob.glob(BASE_DIR + "ckpt_trainer_1_*"))
 
 
 unet1 = Unet3D(
-    dim = 32,
+    dim = 64,
     cond_dim = 1024,
     dim_mults = (1, 2, 4, 8),
     num_resnet_blocks = 3,
