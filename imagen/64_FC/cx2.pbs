@@ -24,3 +24,35 @@ python v_test_v_FC.py -run_name v_64_FC_3e-4
 python v_t02-sampling-and-evaluation.py -run_name v_64_FC_3e-4
 
 jupyter nbconvert --execute --to notebook 'v_T03 - Visualizing Metrics.ipynb'
+
+# cuda-nvcc                 11.8.89                       0    nvidia/label/cuda-11.8.0
+# cudatoolkit               11.8.0              h4ba93d1_13    conda-forge
+
+# nvidia-cublas-cu11        11.10.3.66               pypi_0    pypi
+# nvidia-cuda-cupti-cu11    11.7.101                 pypi_0    pypi
+# nvidia-cuda-nvrtc-cu11    11.7.99                  pypi_0    pypi
+# nvidia-cuda-runtime-cu11  11.7.99                  pypi_0    pypi
+# nvidia-cudnn-cu11         8.5.0.96                 pypi_0    pypi
+# nvidia-cufft-cu11         10.9.0.58                pypi_0    pypi
+# nvidia-curand-cu11        10.2.10.91               pypi_0    pypi
+# nvidia-cusolver-cu11      11.4.0.1                 pypi_0    pypi
+# nvidia-cusparse-cu11      11.7.4.91                pypi_0    pypi
+# nvidia-dali-cuda110       1.40.0                   pypi_0    pypi
+# nvidia-nccl-cu11          2.14.3                   pypi_0    pypi
+# nvidia-nvimgcodec-cu11    0.3.0.5                  pypi_0    pypi
+# nvidia-nvtx-cu11          11.7.91                  pypi_0    pypi
+
+
+# cudatoolkit               11.7.0              hd8887f6_11    conda-forge
+
+# nvidia-cublas-cu11        11.10.3.66               pypi_0    pypi
+# nvidia-cuda-cupti-cu11    11.7.101                 pypi_0    pypi
+# nvidia-cuda-nvrtc-cu11    11.7.99                  pypi_0    pypi
+# nvidia-cuda-runtime-cu11  11.7.99                  pypi_0    pypi
+# nvidia-cudnn-cu11         8.5.0.96                 pypi_0    pypi
+# nvidia-cufft-cu11         10.9.0.58                pypi_0    pypi
+# nvidia-curand-cu11        10.2.10.91               pypi_0    pypi
+# nvidia-cusolver-cu11      11.4.0.1                 pypi_0    pypi
+# nvidia-cusparse-cu11      11.7.4.91                pypi_0    pypi
+# nvidia-nccl-cu11          2.14.3                   pypi_0    pypi
+# nvidia-nvtx-cu11          11.7.91                  pypi_0    pypi
