@@ -38,7 +38,7 @@ best_epoch_dict = {
     "v_64_FC_3e-4": 390,
     "v_64_FC_3e-4_dim64": 390,
     "v_64_FC_3e-4_dim64_img": 390,
-    "v_64_FC_3e-4_dim128": 344
+    "v_64_FC_3e-4_dim128": 340
 }
 
 unet1 = Unet3D(
