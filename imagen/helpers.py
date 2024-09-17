@@ -197,6 +197,37 @@ def FVD(y_pred, y_true):
     average = sum(values_list) / len(values_list)
     return average
 
+def SSIM2(y_pred, y_true):
+    from calculate_ssim import calculate_ssim
+    from einops import rearrange
+    y_pred = rearrange(y_pred, 'b c h w -> 1 b c h w')
+    y_true = rearrange(y_true, 'b c h w -> 1 b c h w')
+    output = calculate_ssim(y_true, y_pred)
+    values_list = list(output.values())
+    average = sum(values_list) / len(values_list)
+    return average
+
+def PSNR2(y_pred, y_true):
+    from calculate_psnr import calculate_psnr
+    from einops import rearrange
+    y_pred = rearrange(y_pred, 'b c h w -> 1 b c h w')
+    y_true = rearrange(y_true, 'b c h w -> 1 b c h w')
+    output = calculate_psnr(y_true, y_pred)
+    values_list = list(output.values())
+    average = sum(values_list) / len(values_list)
+    return average
+
+def LPIPS(y_pred, y_true):
+    from calculate_lpips import calculate_lpips
+    from einops import rearrange
+    device = torch.device("cuda:0")
+    y_pred = rearrange(y_pred, 'b c h w -> 1 b c h w')
+    y_true = rearrange(y_true, 'b c h w -> 1 b c h w')
+    output = calculate_lpips(y_true, y_pred, device)
+    values_list = list(output.values())
+    average = sum(values_list) / len(values_list)
+    return average
+
 def calculate_metrics(y_pred, y_true):
     fn_list = [
         ("kl_div", KL_DivLoss), 
@@ -205,7 +236,10 @@ def calculate_metrics(y_pred, y_true):
         ("psnr", PSNR),
         ("ssim", SSIM),
         ("fid", FID),
-        ("fvd", FVD)
+        ("fvd", FVD),
+        ("ssim2", SSIM2),
+        ("psnr2", PSNR2),
+        ("lpips", LPIPS)
     ]
     metric_dict = {}
     for fn_name, fn in fn_list:
