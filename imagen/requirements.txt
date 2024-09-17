@@ -149,3 +149,4 @@ pyproj
 scipy==1.9.3
 torchmetrics[image]
 lpips
+opencv-python
