@@ -202,7 +202,7 @@ def SSIM2(y_pred, y_true):
     from einops import rearrange
     y_pred = rearrange(y_pred, 'b c h w -> 1 b c h w')
     y_true = rearrange(y_true, 'b c h w -> 1 b c h w')
-    output = calculate_ssim(y_true, y_pred)
+    output = calculate_ssim(y_true, y_pred)["value"]
     values_list = list(output.values())
     average = sum(values_list) / len(values_list)
     return average
@@ -212,7 +212,7 @@ def PSNR2(y_pred, y_true):
     from einops import rearrange
     y_pred = rearrange(y_pred, 'b c h w -> 1 b c h w')
     y_true = rearrange(y_true, 'b c h w -> 1 b c h w')
-    output = calculate_psnr(y_true, y_pred)
+    output = calculate_psnr(y_true, y_pred)["value"]
     values_list = list(output.values())
     average = sum(values_list) / len(values_list)
     return average
@@ -223,7 +223,7 @@ def LPIPS(y_pred, y_true):
     device = torch.device("cuda:0")
     y_pred = rearrange(y_pred, 'b c h w -> 1 b c h w')
     y_true = rearrange(y_true, 'b c h w -> 1 b c h w')
-    output = calculate_lpips(y_true, y_pred, device)
+    output = calculate_lpips(y_true, y_pred, device)["value"]
     values_list = list(output.values())
     average = sum(values_list) / len(values_list)
     return average
