@@ -572,7 +572,7 @@ class v_ModelDataLoader(ModelDataLoader):
             self.extremes = torch.cat((self.extremes, extreme.unsqueeze(0)), 0)
             if self.mode == "fc":
                 self.vid = torch.cat((self.vid, img_o[i:i+t, :, :].unsqueeze(0)), 0)
-                vid_cond = era5[i:i+1, 0:1, :, :]
+                vid_cond = self.normalize(era5[i:i+1, 0:1, :, :])
                 self.vid_cond = torch.cat((self.vid_cond, vid_cond.squeeze(0)), 0)
                 self.era5_vid = torch.cat((self.era5_vid, (torch.cat([self._to3channel(vid_cond.squeeze(1)), era5[i:i+t, 1:, :, :]]).unsqueeze(0)).permute(0, 2, 1, 3, 4)), 0)
             if self.mode == "sr":
@@ -583,7 +583,7 @@ class v_ModelDataLoader(ModelDataLoader):
         end = era5.shape[0]
         if self.mode == "fc":
             self.img = torch.cat((self.img, img_o[start:end]), 0)
-            self.img_cond = torch.cat((self.img_cond, era5[start:end, 0:1, :, :].squeeze(1)), 0)
+            self.img_cond = torch.cat((self.img_cond, self.normalize(era5[start:end, 0:1, :, :]).squeeze(1)), 0)
             self.era5_img = torch.cat((self.era5_img, era5[start:end, 1:, :, :]), 0)
         if self.mode == "sr":
             self.img = torch.cat((self.img, img_n[start:end]), 0)
