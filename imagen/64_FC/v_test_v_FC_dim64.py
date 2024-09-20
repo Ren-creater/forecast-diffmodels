@@ -118,7 +118,8 @@ for idx in range(len(test_dataloader)):
                     cond_video_frames=vid_cond
             )
     #ema_sampled_vid = ema_sampled_vid.squeeze(0)
-    ema_sampled_images = rearrange(ema_sampled_vid, 'b c t h w -> (b t) c h w')
+    masked_sampled_vid = apply_mask_to_video(ema_sampled_vid, vid_cond)
+    ema_sampled_images = rearrange(masked_sampled_vid, 'b c t h w -> (b t) c h w')
     img_64 = rearrange(vid, 'b c t h w -> (b t) c h w')
     
     y_true = img_64.cpu()
