@@ -26,7 +26,7 @@ print = partial(print, flush=True)
 tqdm.__init__ = partialmethod(tqdm.__init__, disable=True)
 
 RUN_NAME = args.run_name
-BASE_DIR = f"/rds/general/user/zr523/home/researchProject/models/{RUN_NAME}/models/{RUN_NAME}/"
+BASE_DIR = f"{BASE_HOME}/models/{RUN_NAME}/models/{RUN_NAME}/"
 
 print(f"Run name: {RUN_NAME}")
 
@@ -55,7 +55,7 @@ args = DDPMArgs()
 args.batch_size = 1
 args.image_size = 64 ; args.o_size = 64 ; args.n_size = 128 ;
 args.continuous_embed_dim = 64*64*3*11
-args.dataset_path = f"/rds/general/ephemeral/user/zr523/ephemeral/satellite/dataloader/{args.o_size}_FC"
+args.dataset_path = f"{BASE_DATA}/satellite/dataloader/{args.o_size}_FC"
 args.datalimit = False
 args.lr = 3e-4
 args.mode = "fc"
@@ -138,7 +138,7 @@ for key, values in test_metric_dict.items():
 print("average")
 print(average_metric_dict)
 
-with open(f"/rds/general/user/zr523/home/researchProject/models/{RUN_NAME}/metrics_test.pkl", "wb") as file:
+with open(f"{BASE_HOME}/models/{RUN_NAME}/metrics_test.pkl", "wb") as file:
     pickle.dump(test_metric_dict, file)
 
 print(f'Evaluation completed.')

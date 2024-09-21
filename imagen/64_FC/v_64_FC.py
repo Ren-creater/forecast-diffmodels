@@ -19,7 +19,7 @@ from torch.utils.tensorboard import SummaryWriter
 from einops import rearrange
 
 RUN_NAME = "v_64_FC_3e-4"
-BASE_DIR = f"/rds/general/user/zr523/home/researchProject/models/{RUN_NAME}"
+BASE_DIR = f"{BASE_HOME}/models/{RUN_NAME}"
 
 os.makedirs(BASE_DIR, exist_ok=True)
 logging.basicConfig(format="%(asctime)s - %(levelname)s: %(message)s", 
@@ -171,7 +171,7 @@ args.batch_size = 1
 args.image_size = 64 ; args.o_size = 64 ; args.n_size = 128 ;
 #changed from 4 to 3 below, and * args.batch_size
 args.continuous_embed_dim = 64*64*3*11
-args.dataset_path = f"/rds/general/ephemeral/user/zr523/ephemeral/satellite/dataloader/{args.o_size}_FC"
+args.dataset_path = f"{BASE_DATA}/satellite/dataloader/{args.o_size}_FC"
 args.device = "cuda"
 args.lr = 3e-4
 args.sample = False#True

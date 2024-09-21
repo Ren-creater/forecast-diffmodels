@@ -12,7 +12,10 @@ from datetime import datetime, timedelta
 from pyproj import Proj
 
 import sys
-sys.path.append("/rds/general/user/zr523/home/researchProject/forecast-diffmodels/imagen/")
+
+BASE_HOME = "/vol/bitbucket/zr523/researchProject"#"/rds/general/user/zr523/home/researchProject"
+
+sys.path.append(f"{BASE_HOME}/forecast-diffmodels/imagen/")
 from imagen_pytorch import Unet, Imagen, ImagenTrainer, NullUnet
 
 import torch.nn.functional as F
@@ -83,7 +86,7 @@ class FCDiffModel:
                 condition_on_continuous = True,
                 continuous_embed_dim = 64*64*1,
             )
-            ckpt_trainer_path = f"/rds/general/user/zr523/home/researchProject/models/{self.run_name}/models/64_FC_woERA5/ckpt_trainer_1_{best_epoch:03}.pt"
+            ckpt_trainer_path = f"{BASE_HOME}/models/{self.run_name}/models/64_FC_woERA5/ckpt_trainer_1_{best_epoch:03}.pt"
         else:    
             imagen = Imagen(
                 unets = unets,
@@ -93,7 +96,7 @@ class FCDiffModel:
                 condition_on_continuous = True,
                 continuous_embed_dim = 64*64*4,
             )
-            ckpt_trainer_path = f"/rds/general/user/zr523/home/researchProject/models/{self.run_name}/models/{self.run_name}/ckpt_trainer_1_{best_epoch:03}.pt"
+            ckpt_trainer_path = f"{BASE_HOME}/models/{self.run_name}/models/{self.run_name}/ckpt_trainer_1_{best_epoch:03}.pt"
         
         trainer = ImagenTrainer(imagen, lr=3e-4, verbose=False).cuda()
         trainer.load(ckpt_trainer_path)  
@@ -167,7 +170,7 @@ class SRDiffModel:
                 condition_on_continuous = False,
                 continuous_embed_dim = None,
             )
-            ckpt_trainer_path = f"/rds/general/user/zr523/home/researchProject/models/{self.run_name}/models/64_128_woERA5/ckpt_trainer_2_{best_epoch:03}.pt"
+            ckpt_trainer_path = f"{BASE_HOME}/models/{self.run_name}/models/64_128_woERA5/ckpt_trainer_2_{best_epoch:03}.pt"
         else:
             imagen = Imagen(
                 unets = unets,
@@ -177,7 +180,7 @@ class SRDiffModel:
                 condition_on_continuous = True,
                 continuous_embed_dim = 128*128*3,
             )
-            ckpt_trainer_path = f"/rds/general/user/zr523/home/researchProject/models/{self.run_name}/models/64_128/ckpt_trainer_2_{best_epoch:03}.pt"        
+            ckpt_trainer_path = f"{BASE_HOME}/models/{self.run_name}/models/64_128/ckpt_trainer_2_{best_epoch:03}.pt"        
         
         trainer = ImagenTrainer(imagen, lr=3e-4, verbose=False).cuda()
         trainer.load(ckpt_trainer_path)  
@@ -260,7 +263,7 @@ class TPDiffModel:
                 condition_on_continuous = True,
                 continuous_embed_dim = 64*64*1,
             )
-            ckpt_trainer_path = f"/rds/general/user/zr523/home/researchProject/models/{self.run_name}/models/64_PRP_woERA5/ckpt_trainer_1_{best_epoch:03}.pt"
+            ckpt_trainer_path = f"{BASE_HOME}/models/{self.run_name}/models/64_PRP_woERA5/ckpt_trainer_1_{best_epoch:03}.pt"
         else:            
             imagen = Imagen(
                 unets = unets,
@@ -270,7 +273,7 @@ class TPDiffModel:
                 condition_on_continuous = True,
                 continuous_embed_dim = 64*64*4,
             )
-            ckpt_trainer_path = f"/rds/general/user/zr523/home/researchProject/models/{self.run_name}/models/64_PRP/ckpt_trainer_1_{best_epoch:03}.pt"        
+            ckpt_trainer_path = f"{BASE_HOME}/models/{self.run_name}/models/64_PRP/ckpt_trainer_1_{best_epoch:03}.pt"        
         
         trainer = ImagenTrainer(imagen, lr=3e-4, verbose=False).cuda()
         trainer.load(ckpt_trainer_path)  
