@@ -2,7 +2,7 @@
 #SBATCH --gres=gpu:1
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=zr523
-export PATH=/vol/bitbucket/zr523/myvenv/bin/:$PATH
+export PATH=/vol/bitbucket/zr523/env/bin/:$PATH
 # the above path could also point to a miniconda install
 # if using miniconda, uncomment the below line
 # source ~/.bashrc
