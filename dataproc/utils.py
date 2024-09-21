@@ -574,7 +574,8 @@ class v_ModelDataLoader(ModelDataLoader):
                 self.vid = torch.cat((self.vid, img_o[i:i+t, :, :].unsqueeze(0)), 0)
                 vid_cond = self.normalize(era5[i:i+1, 0:1, :, :])
                 self.vid_cond = torch.cat((self.vid_cond, vid_cond.squeeze(0)), 0)
-                self.era5_vid = torch.cat((self.era5_vid, (torch.cat([self._to3channel(vid_cond.squeeze(1)), era5[i:i+t, 1:, :, :]]).unsqueeze(0)).permute(0, 2, 1, 3, 4)), 0)
+                #self.era5_vid = torch.cat((self.era5_vid, (torch.cat([self._to3channel(vid_cond.squeeze(1)), era5[i:i+t, 1:, :, :]]).unsqueeze(0)).permute(0, 2, 1, 3, 4)), 0)
+                self.era5_vid = torch.cat((self.era5_vid, (era5[i:i+t, 1:, :, :].unsqueeze(0)).permute(0, 2, 1, 3, 4)), 0)
             if self.mode == "sr":
                 self.vid = torch.cat((self.vid, img_n[i:i+t, :, :].unsqueeze(0)), 0)
                 self.vid_cond = torch.cat((self.vid_cond, img_o[i:i+t, :, :].unsqueeze(0)), 0)
@@ -636,7 +637,8 @@ class v_ModelDataLoader(ModelDataLoader):
                 return self._to3channel(self.vid_cond[idx]).unsqueeze(2).float().cuda(), self.vid_to3channel(self.vid[idx]), self.era5_vid[idx]
             else:
                 img_cond = self._to3channel(self.img_cond[idx])
-                return img_cond.unsqueeze(2).float().cuda(), self._to3channel(self.img[idx]).unsqueeze(2), self.zero_pad(torch.stack([img_cond, self.era5_img[idx]], dim=2))
+                return img_cond.unsqueeze(2).float().cuda(), self._to3channel(self.img[idx]).unsqueeze(2), self.zero_pad(self.era5_img[idx])
+            #self.zero_pad(torch.stack([img_cond, self.era5_img[idx]], dim=2))
             #return self._to3channel(self.img_o[idx]), self.img_n[idx], self.era5[idx]
 
     def get_extreme(self, idx):
