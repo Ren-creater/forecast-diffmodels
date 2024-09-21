@@ -543,7 +543,7 @@ class v_ModelDataLoader(ModelDataLoader):
                                     dtype=torch.float32)
             self.vid = torch.empty((0, t, o_size, o_size), 
                                     dtype=torch.float32)
-            self.era5_vid = torch.empty((0, 3, t+1, o_size, o_size), 
+            self.era5_vid = torch.empty((0, 3, t, o_size, o_size), 
                                     dtype=torch.float32)
         self.new_data = True
         self.test = test
