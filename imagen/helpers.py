@@ -99,7 +99,7 @@ def get_satellite_data(args, modality = "img"):
     else:
         c_dataloader_fns = glob.glob(args.dataset_path + f"/*.dat")
 
-    test_set = pickle.load(open("/rds/general/user/zr523/home/researchProject/forecast-diffmodels/dataproc/test_set.pkl", "rb"))
+    test_set = pickle.load(open(f"{BASE_HOME}/forecast-diffmodels/dataproc/test_set.pkl", "rb"))
 
     if hasattr(args, "augment"): augment = args.augment
     else: augment = False
