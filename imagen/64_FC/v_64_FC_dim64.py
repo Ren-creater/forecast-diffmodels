@@ -17,6 +17,8 @@ import logging
 from torch.utils.tensorboard import SummaryWriter
 
 from einops import rearrange
+from helpers import *
+from imagen_pytorch import Unet3D, Imagen, ImagenTrainer
 
 RUN_NAME = "v_64_FC_3e-4_dim64"
 BASE_DIR = f"{BASE_HOME}/models/{RUN_NAME}"
@@ -45,9 +47,6 @@ import warnings
 warnings.filterwarnings("ignore")
 sys.path.append("../")
 sys.path.append("../imagen/")
-
-from helpers import *
-from imagen_pytorch import Unet3D, Imagen, ImagenTrainer
 
 from functools import partialmethod
 tqdm.__init__ = partialmethod(tqdm.__init__, disable=True)
