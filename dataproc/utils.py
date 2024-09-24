@@ -13,8 +13,8 @@ from pyproj import Proj
 
 import sys
 
-BASE_HOME = "/vol/bitbucket/zr523/researchProject"#"/rds/general/user/zr523/home/researchProject"
-
+BASE_HOME = "/rds/general/user/zr523/home/researchProject"
+#"/vol/bitbucket/zr523/researchProject"
 sys.path.append(f"{BASE_HOME}/forecast-diffmodels/imagen/")
 from imagen_pytorch import Unet, Imagen, ImagenTrainer, NullUnet
 

@@ -19,8 +19,8 @@ from matplotlib import pyplot as plt
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
 
-BASE_HOME = "/vol/bitbucket/zr523/researchProject"#"/rds/general/user/zr523/home/researchProject"
-BASE_DATA = BASE_HOME#"/rds/general/ephemeral/user/zr523/ephemeral"
+BASE_HOME = "/rds/general/user/zr523/home/researchProject"#"/vol/bitbucket/zr523/researchProject"
+BASE_DATA = "/rds/general/ephemeral/user/zr523/ephemeral"#BASE_HOME
 sys.path.append(f"{BASE_HOME}/forecast-diffmodels/dataproc")
 from utils import *
 
