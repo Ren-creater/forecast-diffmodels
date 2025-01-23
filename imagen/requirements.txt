@@ -150,3 +150,17 @@ scipy==1.9.3
 torchmetrics[image]
 lpips
 opencv-python
+scikit-image
+basemap
+openpyxl
+dill
+pandas
+h5netcdf
+xarray-datatree
+
+cdsapi
+eumdac
+paramiko
+aiohttp
+awscli
+ftp-himawari8-hsd

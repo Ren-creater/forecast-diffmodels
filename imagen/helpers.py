@@ -230,6 +230,9 @@ def LPIPS(y_pred, y_true):
     average = sum(values_list) / len(values_list)
     return average
 
+def Nothing(a, b):
+    return 0.0
+
 def calculate_metrics(y_pred, y_true):
     fn_list = [
         ("kl_div", KL_DivLoss), 
@@ -239,8 +242,8 @@ def calculate_metrics(y_pred, y_true):
         ("ssim", SSIM),
         ("fid", FID),
         ("fvd", FVD),
-        ("ssim2", SSIM2),
-        ("psnr2", PSNR2),
+        ("ssim2", Nothing),#SSIM2),
+        ("psnr2", Nothing),#PSNR2),
         ("lpips", LPIPS)
     ]
     metric_dict = {}
@@ -252,14 +255,19 @@ def apply_mask_to_video(generated_video, cond_image):
     from einops import repeat
     # Ensure cond_image is a binary mask (0 or 1)
     mask = (cond_image != 0).float()
-    
+    # print("cond_image")
+    # print(cond_image)
+    # print("mask")
+    # print(mask)
     # Get the number of frames in the generated video
     num_frames = generated_video.shape[2]
-    
+
     # Repeat the mask for each frame
     mask = repeat(mask, 'b c 1 h w -> b c t h w', t=num_frames)
     
     # Apply the mask
     masked_video = generated_video * mask
+    # print("masked_video")
+    # print(masked_video)
     
     return masked_video

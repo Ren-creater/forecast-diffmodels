@@ -17,10 +17,10 @@ cd ..
 
 cd forecast-diffmodels/imagen/64_FC
 
-python train64.py -mode execute -run_name v_FC_dim64 -epochs 400
+#python train64.py -mode execute -run_name v_FC_dim64_no_two_stage -epochs 400 --no_two_stage
 
-# python test64.py -run_name v_FC_dim64 -best_epoch 395
+python test64.py -run_name v_FC_dim64_no_two_stage -best_epoch 350
 
-python v_t02-sampling-and-evaluation.py -run_name v_FC_dim64
+#python v_t02-sampling-and-evaluation.py -run_name v_FC_dim64_no_two_stage
 
-RUN_NAME="v_FC_dim64" jupyter nbconvert --execute --to notebook 'v_T03 - Visualizing Metrics.ipynb' --output "v_FC_dim64"
+#RUN_NAME="v_FC_dim64_no_two_stage" jupyter nbconvert --execute --to notebook 'v_T03 - Visualizing Metrics.ipynb' --output "v_FC_dim64_no_two_stage"

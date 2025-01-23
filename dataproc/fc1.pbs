@@ -1,5 +1,5 @@
 #!/bin/bash
-#PBS -l select=1:ncpus=4:mem=48gb:ngpus=1:gpu_type=L40S
+#PBS -l select=1:ncpus=4:mem=48gb:ngpus=0
 #PBS -l walltime=72:00:00
 
 eval "$(~/anaconda3/bin/conda shell.bash hook)"
@@ -12,6 +12,6 @@ cd imagen-pytorch
 python setup.py develop
 cd ..
 
-cd forecast-diffmodels/imagen/64_FC
+cd forecast-diffmodels/dataproc
 
-python m01_64_FC.py -mode execute -epochs 261
+O_SIZE=128 python fc1-create-dataloaders.py

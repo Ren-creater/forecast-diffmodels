@@ -28,6 +28,7 @@ import os
 
 from utils import *
 from send_emails import *
+import numpy as np
 
 os.environ['MAGICK_MEMORY_LIMIT'] = str(2**128)
 matplotlib.rcParams['animation.embed_limit'] = 2**128
@@ -44,7 +45,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-region', help='Specify the region name eg. North Indian Ocean')
 parser.add_argument('-name', help='Specify the cyclone name eg. Mocha')
 parser.add_argument('-start', help='Specify the start timestep (in hrs) eg. 12')
-parser.add_argument('-', help='Specify the number of horizon (in days) eg. 2')
+parser.add_argument('-horizon', help='Specify the number of horizon (in days) eg. 2')
 args = parser.parse_args()
 
 region = args.region
@@ -53,12 +54,16 @@ start = int(args.start)
 
 print(f"Generating forecast ...\nregion: {region.upper()}\nstart: {start}\nname: {name.upper()}")
 
-cyclone = Cyclone(region, name)
+cyclone = Cyclone(region, name, os.path.join("/rds/general/ephemeral/user/zr523/ephemeral", "satellite/metadata"))
 cyclone.load_era5()
 
 ir108_fn = cyclone.metadata['satmaps'][start]['ir108_fn']
 ir108_scn = cyclone.get_ir108_data(ir108_fn)    
-img = ir108_scn.to_numpy() ; 
+img = ir108_scn.to_numpy() ;
+
+# Replace NaN values with 0
+img = np.nan_to_num(img, nan=0.0)
+
 img = transform_make_sq_image(img)  
 img_o = skimage.transform.resize(img, (64, 64), anti_aliasing=True)
 
@@ -72,15 +77,18 @@ img_64_seq = torch.empty(0, 64, 64)
 img_64_seq = torch.cat([img_64_seq, prev_img])
 
 era5_64_seq = torch.empty(0, 3, 64, 64)
-# era5_128_seq = torch.empty(0, 3, 128, 128)
+era5_128_seq = torch.empty(0, 3, 128, 128)
 
 # fcdiff_model = FCDiffModel("64_FC_rot904_3e-4", img_o)
 # srdiff_model = SRDiffModel("64_128_rot904_sep_3e-4", img_o)
-fcdiff_model = FCDiffModel("64_FC_3e-4", img_o)
-# srdiff_model = SRDiffModel("64_128_3e-4", img_o)
+fcdiff_model = FCDiffModel("v_FC_dim64_no_two_stage", img_o)
+srdiff_model = SRDiffModel("64_128", img_o)
 # tpdiff_model = None
 
 print("Generating forecasts in 64x64 ...")
+
+# make sure horizon is a multiple of 10 plus 1
+horizon = (horizon-1) // 10 * 10 + 1
 
 for satmap_idx in tqdm(range(start, start+horizon)):
     era5_idx = cyclone.metadata['satmaps'][satmap_idx]['era5_idx']
@@ -94,19 +102,20 @@ for satmap_idx in tqdm(range(start, start+horizon)):
     era5_128 = torch.from_numpy(era5_128)
     era5_128_seq = torch.cat([era5_128_seq, era5_128.unsqueeze(0)])
     
-    # if satmap_idx == start: 
-    #     era5_tp = cyclone.get_era5_tp_data(era5_idx)
-    #     era5_tp = skimage.transform.resize(era5_tp, (64, 64), anti_aliasing=True)
-    #     tpdiff_model = TPDiffModel("64_PRP_rot904_3e-4", era5_tp)        
-    #     continue
+    if satmap_idx == start or (satmap_idx - start) % 10 != 0: 
+        # era5_tp = cyclone.get_era5_tp_data(era5_idx)
+        # era5_tp = skimage.transform.resize(era5_tp, (64, 64), anti_aliasing=True)
+        # tpdiff_model = TPDiffModel("64_PRP_rot904_3e-4", era5_tp)        
+        continue
     
-    era5_64 = torch.cat([prev_img, era5_64]).unsqueeze(0)    
-    era5_64 = era5_64.reshape(era5_64.shape[0], -1).float()
+    #era5_64 = torch.cat([prev_img, era5_64]).unsqueeze(0)    
+    #era5_64 = era5_64.reshape(era5_64.shape[0], -1).float()
     
-    curr_img = fcdiff_model.get_sampled_image(era5_64)
+    curr_img = fcdiff_model.get_sampled_vid(prev_img, era5_64_seq)
+
     curr_img = curr_img.cpu()
     img_64_seq = torch.cat([img_64_seq, curr_img]) 
-    prev_img = curr_img
+    prev_img = curr_img[-1:]
 
 print("Forecast generation completed.")
 
@@ -127,7 +136,11 @@ print("Loading actual data ...")
 for satmap_idx in tqdm(range(start, start+horizon), disable=True):
     ir108_fn = cyclone.metadata['satmaps'][satmap_idx]['ir108_fn']
     ir108_scn = cyclone.get_ir108_data(ir108_fn)    
-    img = ir108_scn.to_numpy() ; 
+    img = ir108_scn.to_numpy() ;
+    
+    # Replace NaN values with 0
+    img = np.nan_to_num(img, nan=0.0) 
+    
     img = transform_make_sq_image(img)    
       
     img_n = skimage.transform.resize(img, (128, 128), anti_aliasing=True)
@@ -147,33 +160,39 @@ print("Actual data loaded.")
 
 def update(frame_idx):
     fig.clear()
-    axs = fig.subplot_mosaic([['ir', 'tp'], ['ir_pred', 'tp_pred']],
-                          gridspec_kw={'width_ratios':[1, 1]})
+    axs = fig.subplot_mosaic([['ir'
+                               #, 'tp'
+                               ], ['ir_pred'
+                                   #, 'tp_pred'
+                                   ]],
+                          gridspec_kw={
+                              #'width_ratios':[1, 1]
+                              })
 
     get_map_img(m, axs['ir'], 
                 img2req(actual_ir108[frame_idx]), 
                 cyclone.metadata['map_bounds'])
     axs['ir'].set_title("IR 10.8 µm\nGround Truth")
 
-    get_map_img(m, axs['tp'], 
-                actual_era5_tp[frame_idx], 
-                cyclone.metadata['map_bounds'], era5=True)
-    axs['tp'].set_title("Total Precipitation\nGround Truth")
+    # get_map_img(m, axs['tp'], 
+    #             actual_era5_tp[frame_idx], 
+    #             cyclone.metadata['map_bounds'], era5=True)
+    # axs['tp'].set_title("Total Precipitation\nGround Truth")
 
     get_map_img(m, axs['ir_pred'], 
                 img2req(sr_images[frame_idx][0].cpu()), 
                 cyclone.metadata['map_bounds'])
     axs['ir_pred'].set_title("IR 10.8 µm\nDiffusion Model Forecast")
     
-    if frame_idx != start:
-        get_map_img(m, axs['tp_pred'],
-                ndimage.minimum_filter(tp_images[frame_idx][0].cpu(), size=3),
-                cyclone.metadata['map_bounds'], era5=True)
-    else:
-        get_map_img(m, axs['tp_pred'],
-                    tp_images[frame_idx][0].cpu(),
-                    cyclone.metadata['map_bounds'], era5=True)
-    axs['tp_pred'].set_title("Total Precipitation\nDiffusion Model Forecast")
+    # if frame_idx != start:
+    #     get_map_img(m, axs['tp_pred'],
+    #             ndimage.minimum_filter(tp_images[frame_idx][0].cpu(), size=3),
+    #             cyclone.metadata['map_bounds'], era5=True)
+    # else:
+    #     get_map_img(m, axs['tp_pred'],
+    #                 tp_images[frame_idx][0].cpu(),
+    #                 cyclone.metadata['map_bounds'], era5=True)
+    # axs['tp_pred'].set_title("Total Precipitation\nDiffusion Model Forecast")
 
     fig.suptitle(f"Cyclone {name.replace('-', ' ').title()}\n{region}\n{dates[frame_idx].strftime('%Y-%m-%d %H:%M')}")
 
@@ -188,16 +207,18 @@ if SAVE:
     predictions_dict = {
         "actual": {
             "ir_108": actual_ir108,
-            "tp": actual_era5_tp,
+            #"tp": actual_era5_tp,
         },
         "predicted": {
             "ir_108": sr_images,
-            "tp": tp_images
+            #"tp": tp_images
         },
         "dates": dates
     }
+    os.makedirs('pkls', exist_ok=True)
     with open(f"./pkls/{region_to_abbv[region]}_{start:02}_{name}_forecast.pkl", "wb") as file:
         pickle.dump(predictions_dict, file)
+    os.makedirs('gifs', exist_ok=True)
     animation.save(f'./gifs/{region_to_abbv[region]}_{start:02}_{name}_forecast.gif', writer='imagemagick')
 
 plt.close()  

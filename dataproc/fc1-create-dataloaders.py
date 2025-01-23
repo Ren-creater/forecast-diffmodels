@@ -11,7 +11,12 @@ from tqdm import tqdm
 from utils import *
 from send_emails import send_txt_email
 
-BASE_DIR = "/vol/bitbucket/zr523/researchProject/satellite/dataloader/64_FC/"
+import os
+
+O_SIZE = int(os.getenv("O_SIZE", 64))
+
+BASE_DIR = f"/rds/general/ephemeral/user/zr523/ephemeral/satellite/dataloader/{O_SIZE}_FC/"
+#f"/vol/bitbucket/zr523/researchProject/satellite
 
 import sys
 sys.stdout = open(f'DL_FC_LOG_{datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")}.log','wt')
@@ -35,8 +40,8 @@ def fetch_cyclone(idx):
     cyclone = Cyclone(region, name)
     cyclone.load_era5()
 
-    o_size = 64 ; n_size = 128
-    data_loader = CycloneDataLoader(mode="fc")
+    o_size = O_SIZE ; n_size = 128
+    data_loader = CycloneDataLoader(mode="fc", o_size=o_size, n_size=n_size)
 
     region = region_to_abbv[region]
     name = name.replace(' ', '').lower()

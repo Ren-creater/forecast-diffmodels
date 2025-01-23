@@ -8,10 +8,9 @@ import sys
 sys.path.append("../")
 sys.path.append("../imagen/")
 sys.path.append("../../dataproc/")
-
-from utils import *
+from utils import sample
 from helpers import *
-from imagen_pytorch import Unet, Imagen, ImagenTrainer, NullUnet
+from imagen_pytorch import Unet3D, Imagen, ImagenTrainer, NullUnet
 from send_emails import *
 
 seed_value = 42
@@ -20,13 +19,16 @@ if torch.cuda.is_available(): torch.cuda.manual_seed_all(seed_value)
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-run_name', help='Specify the run name (for eg. 64_FC_3e-4)')
+parser.add_argument('-best_epoch', help='best epoch')
 args = parser.parse_args()
 
-sys.stdout = open(f'FC_TEST_METRICS_LOG_{datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")}.log','wt')
+RUN_NAME = args.run_name
+BEST_EPOCH = args.best_epoch
+sys.stdout = open(f'{RUN_NAME}_TEST_METRICS_LOG_{datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")}.log','wt')
 print = partial(print, flush=True)
 tqdm.__init__ = partialmethod(tqdm.__init__, disable=True)
 
-RUN_NAME = args.run_name
+
 BASE_DIR = f"{BASE_HOME}/models/{RUN_NAME}/models/{RUN_NAME}/"
 
 print(f"Run name: {RUN_NAME}")
@@ -34,18 +36,17 @@ print(f"Run name: {RUN_NAME}")
 best_epoch_dict = {
     "64_FC_rot904_sep_3e-4": 180,
     "64_FC_rot904_3e-4": 240,
-    "64_FC_3e-4": 235
+    "64_FC_3e-4": 235,
+    "v_64_FC_3e-4": 390,
+    "v_64_FC_3e-4_dim64": 390,
+    "v_64_FC_3e-4_dim64_img": 390,
+    "v_64_FC_3e-4_dim128": 340,
+    "v_64_FC_3e-4_dim256": 99,
+    "v_64_FC_3e-4_dim256_2048": 99,
+    "v_64_FC_3e-4_dim_2048": 99
 }
 
-unet1 = Unet(
-    dim = 32,
-    cond_dim = 1024,
-    dim_mults = (1, 2, 4, 8),
-    num_resnet_blocks = 3,
-    layer_attns = (False, True, True, True),
-)  
-
-unets = [unet1]
+unets, O_SIZE = run_name_info(RUN_NAME)
 
 class DDPMArgs:
     def __init__(self):
@@ -53,8 +54,8 @@ class DDPMArgs:
     
 args = DDPMArgs()
 args.batch_size = 1
-args.image_size = 64 ; args.o_size = 64 ; args.n_size = 128 ;
-args.continuous_embed_dim = 64*64*4
+args.image_size = O_SIZE ; args.o_size = O_SIZE ; args.n_size = 128 ;
+args.continuous_embed_dim = args.o_size*args.o_size*3*10
 args.dataset_path = f"{BASE_DATA}/satellite/dataloader/{args.o_size}_FC"
 args.datalimit = False
 args.lr = 3e-4
@@ -71,14 +72,14 @@ if '1k' in RUN_NAME:
 else:
     timesteps = 250
 
-imagen = Imagen(
-    unets = unets,
-    image_sizes = (64),
-    timesteps = 250,
-    cond_drop_prob = 0.1,
-    condition_on_continuous = True,
-    continuous_embed_dim = args.continuous_embed_dim,
-)
+# imagen = Imagen(
+#     unets = unets,
+#     image_sizes = (args.image_size),
+#     timesteps = 250,
+#     cond_drop_prob = 0.1,
+#     condition_on_continuous = True,
+#     continuous_embed_dim = args.continuous_embed_dim,
+# )
 
 metric_dict = {
     "kl_div": [],
@@ -94,33 +95,15 @@ metric_dict = {
 }
 
 test_metric_dict = copy.deepcopy(metric_dict)
-best_epoch = best_epoch_dict[RUN_NAME]
+best_epoch = BEST_EPOCH#best_epoch_dict[RUN_NAME]
 ckpt_trainer_path = f"{BASE_DIR}/ckpt_trainer_1_{best_epoch:03}.pt"
-trainer = ImagenTrainer(imagen, lr=args.lr, verbose=False).cuda()
-trainer.load(ckpt_trainer_path) 
+# trainer = ImagenTrainer(imagen, lr=args.lr, verbose=False).cuda()
+# trainer.load(ckpt_trainer_path) 
 
 for idx in range(len(test_dataloader)):
     print(f"Evaluating batch idx {idx} ...")
 
-    batch_idx = test_dataloader.random_idx[idx]
-
-    vid_cond, vid, era5 = test_dataloader.get_batch(batch_idx)
-
-    img_64 = rearrange(vid, 'b c t h w -> (b t) c h w')
-    era5 = rearrange(era5, 'b c t h w -> (b t) c h w')
-    
-    ema_sampled_images = torch.empty(0, vid.shape[1], vid.shape[3], vid.shape[4])
-    fcdiff_model = FCDiffModel("64_FC_3e-4", test_dataloader.get_extreme(batch_idx))
-    prev_img = unnormalize(vid_cond[0, 0, 0, :, :].cpu(), fcdiff_model.max_value, fcdiff_model.min_value).unsqueeze(0)
-    for i in range(0, era5.shape[0]):
-        era5_64 = torch.cat([prev_img, era5[i:i+1].squeeze(0)]).unsqueeze(0)
-        cond_embeds = era5_64.reshape(era5_64.shape[0], -1).float().cuda()
-        unnormalized, normalized = fcdiff_model.get_both_images(cond_embeds)
-        ema_sampled_images = torch.cat([ema_sampled_images, normalized.cpu()])
-        prev_img = unnormalized.cpu()
-
-    y_true = img_64.cpu()
-    y_pred = ema_sampled_images.cpu()
+    y_true, y_pred = sample(test_dataloader, RUN_NAME, idx, args, ckpt_trainer_path)
     metric_dict = calculate_metrics(y_pred, y_true)
     for key in metric_dict.keys():
         test_metric_dict[key].append(metric_dict[key])

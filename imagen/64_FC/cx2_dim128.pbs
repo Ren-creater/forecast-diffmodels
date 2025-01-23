@@ -17,11 +17,17 @@ cd ..
 
 cd forecast-diffmodels/imagen/64_FC
 
-#accelerate config
+python train64.py -mode execute -run_name v_FC_dim128 -epochs 400
 
-python v_64_FC_dim128.py -mode execute -epochs 400
+python test64.py -run_name v_FC_dim128 -best_epoch 399
 
-python v_test_v_FC_dim128.py -run_name v_64_FC_3e-4_dim128
+python v_t02-sampling-and-evaluation.py -run_name v_FC_dim128
+
+RUN_NAME="v_FC_dim128" jupyter nbconvert --execute --to notebook 'v_T03 - Visualizing Metrics.ipynb' --output "${RUN_NAME}"
+
+# python v_64_FC_dim128.py -mode execute -epochs 400
+
+# python v_test_v_FC_dim128.py -run_name v_64_FC_3e-4_dim128
 
 # python v_t02-sampling-and-evaluation.py -run_name v_64_FC_3e-4_dim64
 

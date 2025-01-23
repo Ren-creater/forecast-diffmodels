@@ -10,6 +10,7 @@ sys.path.append("../")
 sys.path.append("../imagen/")
 sys.path.append("../../dataproc/")
 
+from utils import sample
 from helpers import *
 from imagen_pytorch import Unet3D, Imagen, ImagenTrainer, NullUnet
 from send_emails import *
@@ -34,25 +35,17 @@ print(f"Run name: {RUN_NAME}")
 ckpt_files = sorted(glob.glob(BASE_DIR + "ckpt_1_*"))
 ckpt_trainer_files = sorted(glob.glob(BASE_DIR + "ckpt_trainer_1_*"))
 
-
-unet1 = Unet3D(
-    dim = 64,
-    cond_dim = 1024,
-    dim_mults = (1, 2, 4, 8),
-    num_resnet_blocks = 3,
-    layer_attns = (False, True, True, True),
-)  
-
-unets = [unet1]
+unets, O_SIZE = run_name_info(RUN_NAME)
 
 class DDPMArgs:
     def __init__(self):
         pass
-    
+continuous_embed_dim = 10
+
 args = DDPMArgs()
 args.batch_size = 1
-args.image_size = 64 ; args.o_size = 64 ; args.n_size = 128 ;
-args.continuous_embed_dim = 64*64*3*11
+args.image_size = O_SIZE ; args.o_size = O_SIZE ; args.n_size = 128 ;
+args.continuous_embed_dim = args.o_size*args.o_size*3*continuous_embed_dim
 args.dataset_path = f"{BASE_DATA}/satellite/dataloader/{args.o_size}_FC"
 args.datalimit = False
 args.mode = "fc"
@@ -67,15 +60,6 @@ if '1k' in RUN_NAME:
     timesteps = 1000
 else:
     timesteps = 250
-
-imagen = Imagen(
-    unets = unets,
-    image_sizes = (64),
-    timesteps = 250,
-    cond_drop_prob = 0.1,
-    condition_on_continuous = True,
-    continuous_embed_dim = args.continuous_embed_dim,
-)
 
 random_idx = [5]
 
@@ -105,27 +89,8 @@ for idx in range(len(ckpt_trainer_files)):
         if mode == "train" : dataloader = train_dataloader
         elif mode == "test": dataloader = test_dataloader
     
-        trainer = ImagenTrainer(imagen, lr=args.lr, verbose=False).cuda()
-        trainer.load(ckpt_trainer_path)  
+        y_true, y_pred = sample(dataloader, RUN_NAME, random_idx[0], args, ckpt_trainer_path)  
         
-        batch_idx = dataloader.random_idx[random_idx[0]]
-        
-        vid_cond, vid, era5 = dataloader.get_batch(batch_idx)
-        cond_embeds = era5.reshape(1, -1).float().cuda()
-        ema_sampled_vid = imagen.sample(
-                    batch_size = vid.shape[0],#img_64.shape[0],          
-                    cond_scale = 3.,
-                    continuous_embeds=cond_embeds,
-                    use_tqdm = False,
-                    video_frames = vid.shape[2],
-                    cond_video_frames=vid_cond
-            )
-        #ema_sampled_vid = ema_sampled_vid.squeeze(0)
-        ema_sampled_images = rearrange(ema_sampled_vid, 'b c t h w -> (b t) c h w')
-        img_64 = rearrange(vid, 'b c t h w -> (b t) c h w')
-
-        y_true = img_64.cpu()
-        y_pred = ema_sampled_images.cpu()
         metric_dict = calculate_metrics(y_pred, y_true)
         for key in metric_dict.keys():
             train_test_metric_dict[mode][key].append(metric_dict[key])

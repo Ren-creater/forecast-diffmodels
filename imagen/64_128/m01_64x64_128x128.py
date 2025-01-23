@@ -16,6 +16,16 @@ from torch import optim
 import logging
 from torch.utils.tensorboard import SummaryWriter
 
+
+import sys
+import warnings
+
+warnings.filterwarnings("ignore")
+sys.path.append("../")
+sys.path.append("../imagen/")
+
+from helpers import *
+
 RUN_NAME = "64_128"
 BASE_DIR = f"{BASE_HOME}/models/{RUN_NAME}"
 
@@ -37,14 +47,6 @@ mode = cmd_args.mode
 
 MODE = mode.upper()
 
-import sys
-import warnings
-
-warnings.filterwarnings("ignore")
-sys.path.append("../")
-sys.path.append("../imagen/")
-
-from helpers import *
 from imagen_pytorch import Unet, Imagen, ImagenTrainer, NullUnet
 
 from functools import partialmethod
@@ -163,7 +165,7 @@ args.sample = True
 args.datalimit = False
 args.augment = True
 args.shuffle_every_epoch = True
-args.region = region_to_abbv["North Indian Ocean"]
+#args.region = region_to_abbv["North Indian Ocean"]
 
 args.dataloaders = get_satellite_data(args)
 logging.info(f"Dataset loaded")

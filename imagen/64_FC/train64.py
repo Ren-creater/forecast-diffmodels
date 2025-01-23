@@ -16,6 +16,8 @@ from torch import optim
 import logging
 from torch.utils.tensorboard import SummaryWriter
 
+from einops import rearrange
+
 import sys
 import warnings
 
@@ -24,8 +26,17 @@ sys.path.append("../")
 sys.path.append("../imagen/")
 
 from helpers import *
+from imagen_pytorch import Unet3D, Imagen, ImagenTrainer
 
-RUN_NAME = "64_FC_rot904_3e-4"
+parser = argparse.ArgumentParser()
+parser.add_argument('-run_name', help='Specify the run name (for eg. 64_FC_3e-4)')
+parser.add_argument('-mode', help='Specify the mode [execute, experiment]')
+parser.add_argument('-epochs', help='Specify the number of epochs')
+parser.add_argument('--no_ema', action='store_false', dest='use_ema', help='disable ema for training')
+parser.add_argument('--no_two_stage', action='store_false', dest='img', help='disable training with single frames')
+cmd_args = parser.parse_args()
+
+RUN_NAME = cmd_args.run_name
 BASE_DIR = f"{BASE_HOME}/models/{RUN_NAME}"
 
 os.makedirs(BASE_DIR, exist_ok=True)
@@ -38,33 +49,19 @@ seed_value = 42
 torch.manual_seed(seed_value)
 if torch.cuda.is_available(): torch.cuda.manual_seed_all(seed_value)
 
-parser = argparse.ArgumentParser()
-parser.add_argument('-mode', help='Specify the mode [execute, experiment]')
-parser.add_argument('-epochs', help='Specify the number of epochs')
-cmd_args = parser.parse_args()
 mode = cmd_args.mode
 
 MODE = mode.upper()
 
-from imagen_pytorch import Unet, Imagen, ImagenTrainer, NullUnet
-
 from functools import partialmethod
 tqdm.__init__ = partialmethod(tqdm.__init__, disable=True)
 
-unet1 = Unet(
-    dim = 32,
-    cond_dim = 1024,
-    dim_mults = (1, 2, 4, 8),
-    num_resnet_blocks = 3,
-    layer_attns = (False, True, True, True),
-)  
-
-unets = [unet1]
+unets, O_SIZE = run_name_info(RUN_NAME)
 
 def train(args):
     setup_logging(args.run_name, BASE_DIR)
     device = args.device
-    train_dataloader, test_dataloader = args.dataloaders ; random_batch_idx = [12]
+    train_dataloader, test_dataloader = args.dataloaders ; random_batch_idx = [5]
     logger = SummaryWriter(os.path.join(f"{BASE_DIR}/runs", args.run_name))
     epoch = 0
 
@@ -78,7 +75,7 @@ def train(args):
         logging.info("No GPU available.")
     
     k = 1
-    trainer = ImagenTrainer(imagen, lr=args.lr, verbose=False).cuda()
+    trainer = ImagenTrainer(imagen, use_ema = args.use_ema, lr=args.lr, verbose=False).cuda()
     try:
         ckpt_path = os.path.join(f"{BASE_DIR}/models", args.run_name, f"ckpt_{k}.pt")
         ckpt_trainer_path = os.path.join(f"{BASE_DIR}/models", args.run_name, f"ckpt_trainer_{k}.pt")
@@ -98,21 +95,31 @@ def train(args):
     
     for epoch in range(start_epoch+1, args.epochs):
         logging.info(f"Starting epoch {epoch}:")
+        if not cmd_args.img or epoch > args.epochs // 8:
+            logging.info("Starting training on 10 frames videos")
+            train_dataloader.switch_to_vid()
+            test_dataloader.switch_to_vid()
+            train_dataloader.create_batches(args.batch_size, False)
+            test_dataloader.create_batches(args.batch_size, False)
+
         if args.shuffle_every_epoch:
             _ = len(train_dataloader) ; train_dataloader.create_batches(args.batch_size, False)
+        print(len(train_dataloader))
+        print(len(test_dataloader))
         pbar = tqdm(train_dataloader)
-        for i, (img_64, _, era5) in enumerate(pbar):
-            cond_embeds = era5.reshape(era5.shape[0], -1).float().cuda()
-            img_64 = img_64.float().cuda()
-            
-            loss = trainer(images=img_64,
+
+        for i, (vid_cond, vid_64, era5) in enumerate(pbar):            
+            cond_embeds = era5.reshape(era5.shape[0], -1).float().cuda()                        
+            loss = trainer(vid_64,
+                           cond_video_frames=vid_cond,
                            continuous_embeds=cond_embeds,
-                           unet_number=k)
+                           unet_number=k,
+                           ignore_time=False)
             trainer.update(unet_number=k)
     
             pbar.set_postfix({f"MSE_{k}":loss})
             logger.add_scalar(f"MSE_{k}",loss, global_step=epoch*len(train_dataloader)+i)
-    
+
         checkpoint = {
             'epoch': epoch,
             'loss': loss
@@ -130,16 +137,21 @@ def train(args):
         if args.sample:
             logging.info(f"Starting sampling for epoch {epoch}:") ; _ = len(test_dataloader)               
             random_batch = test_dataloader.random_idx[random_batch_idx][0]
-            img_64, _, era5 = test_dataloader.get_batch(random_batch)
+            vid_cond, vid, era5 = test_dataloader.get_batch(random_batch)
             
-            cond_embeds = era5.reshape(era5.shape[0], -1).float().cuda()
-            ema_sampled_images = imagen.sample(
-                        batch_size = img_64.shape[0],          
+            cond_embeds = era5.reshape(1, -1).float().cuda()
+            ema_sampled_vid = imagen.sample(
+                        batch_size = vid.shape[0],#img_64.shape[0],          
                         cond_scale = 3.,
                         continuous_embeds=cond_embeds,
-                        use_tqdm = False
+                        use_tqdm = False,
+                        video_frames = vid.shape[2],
+                        cond_video_frames=vid_cond
                 )
-            save_images_v2(test_dataloader, img_64, ema_sampled_images, os.path.join(f"{BASE_DIR}/results", args.run_name, f"{epoch}_ema.jpg"))
+            #ema_sampled_vid = ema_sampled_vid.squeeze(0)
+            ema_sampled_images = rearrange(ema_sampled_vid, 'b c t h w -> (b t) c h w')
+            vid = rearrange(vid, 'b c t h w -> (b t) c h w')
+            save_images_v2(test_dataloader, vid, ema_sampled_images, os.path.join(f"{BASE_DIR}/results", args.run_name, f"{epoch}_ema.jpg"))
             logging.info(f"Completed sampling for epoch {epoch}.")
                 
 import argparse
@@ -150,26 +162,38 @@ class DDPMArgs:
     
 args = DDPMArgs()
 args.run_name = RUN_NAME
+args.use_ema = cmd_args.use_ema
 args.epochs = int(cmd_args.epochs)
-args.batch_size = 16
-args.image_size = 64 ; args.o_size = 64 ; args.n_size = 128 ;
-args.continuous_embed_dim = 64*64*4
+args.batch_size = 1
+args.image_size = O_SIZE ; args.o_size = O_SIZE ; args.n_size = 128 ;
+#changed from 4 to 3 below, and * args.batch_size
+args.continuous_embed_dim = args.o_size*args.o_size*3*10
 args.dataset_path = f"{BASE_DATA}/satellite/dataloader/{args.o_size}_FC"
 args.device = "cuda"
 args.lr = 3e-4
 args.sample = False#True
 args.datalimit = False
-args.augment = True
+args.augment = False#True
 args.mode = "fc"
 args.shuffle_every_epoch = False
-#args.region = region_to_abbv["North Indian Ocean"]
+#args.region = region_to_abbv["Australia"]#"North Indian Ocean"]
 
-args.dataloaders = get_satellite_data(args)
+args.dataloaders = get_satellite_data(args, "vid")
 logging.info(f"Dataset loaded")
 
+def get_n_params(model):
+    pp=0
+    for p in list(model.parameters()):
+        nn=1
+        for s in list(p.size()):
+            nn = nn*s
+        pp += nn
+    return pp
+
+print(f"number of parameters: {get_n_params(unets[0])}")
 imagen = Imagen(
     unets = unets,
-    image_sizes = (64),
+    image_sizes = (args.image_size),
     timesteps = 250,
     cond_drop_prob = 0.1,
     condition_on_continuous = True,

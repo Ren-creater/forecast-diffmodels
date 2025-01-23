@@ -10,13 +10,15 @@ from tqdm import tqdm
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from datetime import datetime, timedelta
 from pyproj import Proj
-
+ 
+import os
 import sys
 
 BASE_HOME = "/rds/general/user/zr523/home/researchProject"
 #"/vol/bitbucket/zr523/researchProject"
 sys.path.append(f"{BASE_HOME}/forecast-diffmodels/imagen/")
-from imagen_pytorch import Unet, Imagen, ImagenTrainer, NullUnet
+from imagen_pytorch import Unet, Unet3D, Imagen, ImagenTrainer, NullUnet
+from einops import rearrange, repeat
 
 import torch.nn.functional as F
 
@@ -45,17 +47,17 @@ GFS_VARIABLES = [
     ("tp", "total_precipitation", "Total Precipitation")
 ]
 
-
 # ---------------------------------------------
 # Classes defined for Model Loading
 # ---------------------------------------------
 
 class FCDiffModel:
-    def __init__(self, run_name, img_o, woERA5=False):
+    def __init__(self, run_name, img_o, ckpt_trainer_path=None, woERA5=False):
         self.run_name = run_name
         self.img_o = img_o
         self.max_value, self.min_value = self.img_o.max(), self.img_o.min()
         self.woERA5 = woERA5
+        self.ckpt_trainer_path = ckpt_trainer_path
         self._init_diff_model()        
         
     def _init_diff_model(self):
@@ -63,21 +65,25 @@ class FCDiffModel:
             "64_FC_rot904_sep_3e-4": 180,
             "64_FC_rot904_3e-4": 240,
             "64_FC_3e-4": 235,
-            "64_FC_woERA5_rot904_3e-4": 220
+            "64_FC_woERA5_rot904_3e-4": 220,
+            "v_FC_dim64_no_two_stage": 350
         }
+
+        unets, _ = run_name_info(self.run_name)
         
-        unet1 = Unet(
-            dim = 32,
-            cond_dim = 1024,
-            dim_mults = (1, 2, 4, 8),
-            num_resnet_blocks = 3,
-            layer_attns = (False, True, True, True),
-        )  
-        
-        unets = [unet1]
         best_epoch = best_epoch_dict[self.run_name]
 
-        if self.woERA5:
+        if "v" in self.run_name:
+            imagen = Imagen(
+                unets = unets,
+                image_sizes = (64),
+                timesteps = 250,
+                cond_drop_prob = 0.1,
+                condition_on_continuous = True,
+                continuous_embed_dim = 64*64*3*10,
+            )
+            ckpt_trainer_path = f"{BASE_HOME}/models/{self.run_name}/models/{self.run_name}/ckpt_trainer_1_{best_epoch:03}.pt"
+        elif self.woERA5:
             imagen = Imagen(
                 unets = unets,
                 image_sizes = (64),
@@ -97,10 +103,34 @@ class FCDiffModel:
                 continuous_embed_dim = 64*64*4,
             )
             ckpt_trainer_path = f"{BASE_HOME}/models/{self.run_name}/models/{self.run_name}/ckpt_trainer_1_{best_epoch:03}.pt"
-        
+        if self.ckpt_trainer_path is not None:
+            ckpt_trainer_path = self.ckpt_trainer_path
         trainer = ImagenTrainer(imagen, lr=3e-4, verbose=False).cuda()
         trainer.load(ckpt_trainer_path)  
         self.imagen = imagen
+
+    def get_sampled_vid(self, vid_cond, cond_embeds):
+        from helpers import apply_mask_to_video
+        vid_cond = normalize(vid_cond, self.max_value, self.min_value)
+        if vid_cond.shape[0] == 1:
+            vid_cond = rearrange(vid_cond, '1 h w -> 1 1 1 h w')
+        else:
+            vid_cond = rearrange(vid_cond, 't h w -> 1 1 t h w')
+        vid_cond = repeat(vid_cond, 'b 1 t h w -> b c t h w', c=3).float().cuda()
+        cond_embeds = rearrange(cond_embeds[-10:], 'b c h w -> 1 c b h w').reshape(1, -1).float().cuda()
+        ema_sampled_vid = self.imagen.sample(
+                    batch_size = 1,       
+                    cond_scale = 3.,
+                    continuous_embeds=cond_embeds,
+                    use_tqdm = False,
+                    video_frames = 10,
+                    cond_video_frames=vid_cond
+                )
+        ema_sampled_vid = apply_mask_to_video(ema_sampled_vid, vid_cond[:, :, :1, :, :])
+        sampled_image = ema_sampled_vid[0, 0, :, :, :]
+
+        sampled_image = unnormalize(sampled_image, self.max_value, self.min_value)
+        return sampled_image
 
     def get_sampled_image(self, cond_embeds):
         sampled_image = self.imagen.sample(
@@ -145,7 +175,8 @@ class SRDiffModel:
             "64_128_rot904_3e-4": 85,
             "64_128_sep_3e-4": 220,
             "64_128_rot904_sep_3e-4": 135,
-            "64_128_woERA5_rot904_sep_3e-4": 255
+            "64_128_woERA5_rot904_sep_3e-4": 255,
+            "64_128": 135,
         }
                 
         unet1 = NullUnet()  
@@ -181,7 +212,7 @@ class SRDiffModel:
                 continuous_embed_dim = 128*128*3,
             )
             ckpt_trainer_path = f"{BASE_HOME}/models/{self.run_name}/models/64_128/ckpt_trainer_2_{best_epoch:03}.pt"        
-        
+                
         trainer = ImagenTrainer(imagen, lr=3e-4, verbose=False).cuda()
         trainer.load(ckpt_trainer_path)  
     
@@ -310,14 +341,14 @@ class TPDiffModel:
 # Classes defined for Model Creation Tasks
 # ---------------------------------------------
 
-class Cyclone:            
+class Cyclone:
     def _get_filename(self, region, name):
         self.abbv_region = region_to_abbv[region]
         name = name.replace(' ', '').lower()
         return f"{self.abbv_region}_{name}"
 
-    def __init__(self, region, name):        
-        self.BASE_DIR = "/vol/bitbucket/zr523/researchProject/satellite/metadata"
+    def __init__(self, region, name, dir="/vol/bitbucket/zr523/researchProject/satellite/metadata"):
+        self.BASE_DIR = dir#"/rds/general/ephemeral/user/zr523/ephemeral/satellite/metadata"#dir
         self.filename = self._get_filename(region, name)
         with open(f"{self.BASE_DIR}/{self.filename}.metadata", 'rb') as metadata_file:
             self.metadata = pickle.load(metadata_file)
@@ -359,69 +390,69 @@ class Cyclone:
 
 
 class CycloneDataLoader:
-    def __init__(self, mode="sr"):
-        
+    def __init__(self, mode="sr", o_size=64, n_size=128):
+
         if mode == "sr":
-            self.img_64  = torch.empty((0, 64, 64), 
+            self.img_64  = torch.empty((0, 64, 64),
                                    dtype=torch.float32)
-            self.img_128 = torch.empty((0, 128, 128), 
+            self.img_128 = torch.empty((0, 128, 128),
                                     dtype=torch.float32)
-            self.era5 = torch.empty((0, 3, 128, 128), 
+            self.era5 = torch.empty((0, 3, 128, 128),
                                     dtype=torch.float32)
         if mode == "tp":
-            self.img_64  = torch.empty((0, 4, 64, 64), 
+            self.img_64  = torch.empty((0, 4, 64, 64),
                                    dtype=torch.float32)
-            self.img_128 = torch.empty((0, 128, 128), 
-                                    dtype=torch.float32)            
-            self.era5 = torch.empty((0, 64, 64), 
+            self.img_128 = torch.empty((0, 128, 128),
+                                    dtype=torch.float32)
+            self.era5 = torch.empty((0, 64, 64),
                                     dtype=torch.float32)
 
         if mode == "fc":
-            self.img_64  = torch.empty((0, 64, 64), 
+            self.img_64  = torch.empty((0, o_size, o_size),
                                    dtype=torch.float32)
-            self.img_128 = torch.empty((0, 128, 128), 
+            self.img_128 = torch.empty((0, n_size, n_size),
                                     dtype=torch.float32)
-            self.era5 = torch.empty((0, 4, 64, 64), 
+            self.era5 = torch.empty((0, 4, o_size, o_size),
                                     dtype=torch.float32)
 
-    
+
     def add_image(self, img_64, img_128, era5):
         self.img_64  = torch.cat((self.img_64, img_64), 0)
         self.img_128 = torch.cat((self.img_128, img_128), 0)
         self.era5 = torch.cat((self.era5, era5), 0)
 
 class ModelDataLoader:
-    def __init__(self, batch_size, o_size=64, n_size=128, 
-                 augment=False, 
+    def __init__(self, batch_size, o_size=64, n_size=128,
+                 augment=False,
                  test=False, mode="sr", shuffle=True):
         self.batch_size = batch_size
-        self.shuffle = shuffle        
-        
+        self.shuffle = shuffle
+
         self.mode = mode
-                     
+
         if mode == "sr":
-            self.img_o = torch.empty((0, o_size, o_size), 
+            self.img_o = torch.empty((0, o_size, o_size),
                                    dtype=torch.float32)
-            self.img_n = torch.empty((0, n_size, n_size), 
+            self.img_n = torch.empty((0, n_size, n_size),
                                     dtype=torch.float32)
-            self.era5 = torch.empty((0, 3, n_size, n_size), 
+            self.era5 = torch.empty((0, 3, n_size, n_size),
                                     dtype=torch.float32)
         if mode == "tp":
-            self.img_o = torch.empty((0, 4, o_size, o_size), 
+            self.img_o = torch.empty((0, 4, o_size, o_size),
                                    dtype=torch.float32)
-            self.img_n = torch.empty((0, n_size, n_size), 
+            self.img_n = torch.empty((0, n_size, n_size),
                                     dtype=torch.float32)
-            self.era5 = torch.empty((0, o_size, o_size), 
+            self.era5 = torch.empty((0, o_size, o_size),
                                     dtype=torch.float32)
 
         if mode == "fc":
-            self.img_o = torch.empty((0, o_size, o_size), 
+            self.img_o = torch.empty((0, o_size, o_size),
                                    dtype=torch.float32)
-            self.img_n = torch.empty((0, n_size, n_size), 
+            self.img_n = torch.empty((0, n_size, n_size),
                                     dtype=torch.float32)
-            self.era5 = torch.empty((0, 4, o_size, o_size), 
+            self.era5 = torch.empty((0, 4, o_size, o_size),
                                     dtype=torch.float32)
-            
+
         self.new_data = True
         self.test = test
         self.augment = augment
@@ -430,12 +461,12 @@ class ModelDataLoader:
         return x.expand(3, *x.shape[0:]).permute(dims=(1, 0, 2, 3))
 
     def __len__(self):
-        if self.new_data == True: 
+        if self.new_data == True:
             self.create_batches(self.batch_size)
         self.new_data = False
         return self.random_idx.shape[0]
 
-    def __iter__(self):        
+    def __iter__(self):
         self.batch_idx = 0
         return self
 
@@ -447,7 +478,7 @@ class ModelDataLoader:
         else:
             raise StopIteration
 
-    def add_rotations(self, n=3):  
+    def add_rotations(self, n=3):
         x, y, z = self.img_o, self.img_n, self.era5
         i = 0
         while i < n:
@@ -464,12 +495,12 @@ class ModelDataLoader:
 
     def normalize(self, img):
         return (img - img.min()) / (img.max() - img.min())
-    
+
     def add_dataloader(self, cyclone_dataloader):
         if self.mode == "sr":
             img_o = self.normalize(cyclone_dataloader.img_64)
             img_n = self.normalize(cyclone_dataloader.img_128)
-            era5  = cyclone_dataloader.era5       
+            era5  = cyclone_dataloader.era5
         if self.mode == "tp":
             img_o = cyclone_dataloader.img_64
             img_n = cyclone_dataloader.img_128
@@ -489,7 +520,7 @@ class ModelDataLoader:
         if self.shuffle: idx = torch.randperm(size)
         self.random_idx = idx.reshape(-1, batch_size)
 
-    def get_batch(self, idx): 
+    def get_batch(self, idx):
         if self.mode == "sr":
             return self._to3channel(self.img_o[idx]), self._to3channel(self.img_n[idx]), self.era5[idx]
         if self.mode == "tp":
@@ -499,51 +530,51 @@ class ModelDataLoader:
 
 t = 10
 class v_ModelDataLoader(ModelDataLoader):
-    def __init__(self, batch_size, o_size=64, n_size=128, 
-                 augment=False, 
+    def __init__(self, batch_size, o_size=64, n_size=128,
+                 augment=False,
                  test=False, mode="sr", shuffle=True
                  ):
         self.batch_size = batch_size
-        self.shuffle = shuffle        
+        self.shuffle = shuffle
         self.mode = mode
         self.modality = "img"
-        self.extremes = torch.empty((0, 2), 
+        self.extremes = torch.empty((0, 2),
                                     dtype=torch.float32)
-                     
+
         if mode == "sr":
-            self.img_cond = torch.empty((0, o_size, o_size), 
-                                    dtype=torch.float32)            
-            self.img = torch.empty((0, n_size, n_size), 
+            self.img_cond = torch.empty((0, o_size, o_size),
+                                    dtype=torch.float32)
+            self.img = torch.empty((0, n_size, n_size),
                                    dtype=torch.float32)
-            self.era5_img = torch.empty((0, 3, n_size, n_size), 
+            self.era5_img = torch.empty((0, 3, n_size, n_size),
                                     dtype=torch.float32)
-            self.vid_cond = torch.empty((0, 8, o_size, o_size), 
+            self.vid_cond = torch.empty((0, 8, o_size, o_size),
                                     dtype=torch.float32)
-            self.vid = torch.empty((0, 8, n_size, n_size), 
+            self.vid = torch.empty((0, 8, n_size, n_size),
                                     dtype=torch.float32)
-            self.era5_vid = torch.empty((0, 3, 8, n_size, n_size), 
+            self.era5_vid = torch.empty((0, 3, 8, n_size, n_size),
                                     dtype=torch.float32)
-            
+
         if mode == "tp":
-            self.img_o = torch.empty((0, 4, o_size, o_size), 
+            self.img_o = torch.empty((0, 4, o_size, o_size),
                                    dtype=torch.float32)
-            self.img_n = torch.empty((0, n_size, n_size), 
+            self.img_n = torch.empty((0, n_size, n_size),
                                     dtype=torch.float32)
-            self.era5 = torch.empty((0, o_size, o_size), 
+            self.era5 = torch.empty((0, o_size, o_size),
                                     dtype=torch.float32)
 
         if mode == "fc":
-            self.img_cond = torch.empty((0, o_size, o_size), 
-                                    dtype=torch.float32)            
-            self.img = torch.empty((0, o_size, o_size), 
+            self.img_cond = torch.empty((0, o_size, o_size),
+                                    dtype=torch.float32)
+            self.img = torch.empty((0, o_size, o_size),
                                    dtype=torch.float32)
-            self.era5_img = torch.empty((0, 3, o_size, o_size), 
+            self.era5_img = torch.empty((0, 3, o_size, o_size),
                                     dtype=torch.float32)
-            self.vid_cond = torch.empty((0, o_size, o_size), 
+            self.vid_cond = torch.empty((0, o_size, o_size),
                                     dtype=torch.float32)
-            self.vid = torch.empty((0, t, o_size, o_size), 
+            self.vid = torch.empty((0, t, o_size, o_size),
                                     dtype=torch.float32)
-            self.era5_vid = torch.empty((0, 3, t, o_size, o_size), 
+            self.era5_vid = torch.empty((0, 3, t, o_size, o_size),
                                     dtype=torch.float32)
         self.new_data = True
         self.test = test
@@ -552,7 +583,7 @@ class v_ModelDataLoader(ModelDataLoader):
     def vid_to3channel(self, x):
         return x.expand(3, *x.shape[0:]).permute(dims=(1, 0, 2, 3, 4))
 
-    def add_img_rotations(self, n=3):  
+    def add_img_rotations(self, n=3):
         x, y, z = self.img_cond, self.img, self.era5_img
         i = 0
         while i < n:
@@ -563,9 +594,15 @@ class v_ModelDataLoader(ModelDataLoader):
 
     def switch_to_vid(self):
         self.modality = "vid"
-    
+
     def switch_to_img(self):
         self.modality = "img"
+    
+    def normalize(self, img, max_val=None, min_val=None):
+        if max_val is None or min_val is None:
+            max_val = img.max()
+            min_val = img.min()
+        return (img - min_val) / (max_val - min_val)
 
     def add_vid(self, img_o, img_n, era5, extreme):
         size = era5.shape[0]
@@ -575,7 +612,7 @@ class v_ModelDataLoader(ModelDataLoader):
             self.extremes = torch.cat((self.extremes, extreme.unsqueeze(0)), 0)
             if self.mode == "fc":
                 self.vid = torch.cat((self.vid, img_o[i:i+t, :, :].unsqueeze(0)), 0)
-                vid_cond = self.normalize(era5[i:i+1, 0:1, :, :])
+                vid_cond = self.normalize(era5[i:i+1, 0:1, :, :], extreme[0], extreme[1])
                 self.vid_cond = torch.cat((self.vid_cond, vid_cond.squeeze(0)), 0)
                 #self.era5_vid = torch.cat((self.era5_vid, (torch.cat([self._to3channel(vid_cond.squeeze(1)), era5[i:i+t, 1:, :, :]]).unsqueeze(0)).permute(0, 2, 1, 3, 4)), 0)
                 self.era5_vid = torch.cat((self.era5_vid, (era5[i:i+t, 1:, :, :].unsqueeze(0)).permute(0, 2, 1, 3, 4)), 0)
@@ -587,19 +624,19 @@ class v_ModelDataLoader(ModelDataLoader):
         end = era5.shape[0]
         if self.mode == "fc":
             self.img = torch.cat((self.img, img_o[start:end]), 0)
-            self.img_cond = torch.cat((self.img_cond, self.normalize(era5[start:end, 0:1, :, :]).squeeze(1)), 0)
+            self.img_cond = torch.cat((self.img_cond, self.normalize(era5[start:end, 0:1, :, :], extreme[0], extreme[1]).squeeze(1)), 0)
             self.era5_img = torch.cat((self.era5_img, era5[start:end, 1:, :, :]), 0)
         if self.mode == "sr":
             self.img = torch.cat((self.img, img_n[start:end]), 0)
             self.img_cond = torch.cat((self.img_cond, img_o[start:end]), 0)
             self.era5_img = torch.cat((self.era5_img, era5[start:end, :, :, :]), 0)
         self.new_data = True
-    
+
     def add_dataloader(self, cyclone_dataloader):
         if self.mode == "sr":
             img_o = self.normalize(cyclone_dataloader.img_64)
             img_n = self.normalize(cyclone_dataloader.img_128)
-            era5  = cyclone_dataloader.era5       
+            era5  = cyclone_dataloader.era5
         if self.mode == "tp":
             img_o = cyclone_dataloader.img_64
             img_n = cyclone_dataloader.img_128
@@ -626,31 +663,26 @@ class v_ModelDataLoader(ModelDataLoader):
         random_idx = idx.reshape(-1, batch_size)
         self.random_idx = random_idx
 
-    def get_batch(self, idx): 
+    def get_batch(self, idx):
         if self.mode == "sr":
             #return self._to3channel(self.img_o[idx]), self._to3channel(self.img_n[idx]), self.era5[idx]
             if self.modality == "vid":
                 return self.vid_to3channel(self.vid_cond[idx]).float().cuda(), self.vid_to3channel(self.vid[idx]), self.era5_vid[idx]
             else:
-                return self._to3channel(self.img_cond[idx]).unsqueeze(2).float().cuda(), self._to3channel(self.img[idx]).unsqueeze(2), self.zero_pad(self.era5_img[idx])
+                return self._to3channel(self.img_cond[idx]).unsqueeze(2).float().cuda(), self._to3channel(self.img[idx]).unsqueeze(2), zero_pad(self.era5_img[idx])
         if self.mode == "tp":
             return self.img_o[idx], self.img_n[idx], self._to3channel(self.era5[idx])
         if self.mode == "fc":
             if self.modality == "vid":
-                return self._to3channel(self.vid_cond[idx]).unsqueeze(2).float().cuda(), self.vid_to3channel(self.vid[idx]), self.era5_vid[idx]
+                return self._to3channel(self.vid_cond[idx]).unsqueeze(2).float().cuda(), self.vid_to3channel(self.vid[idx]).float(), self.era5_vid[idx]
             else:
                 img_cond = self._to3channel(self.img_cond[idx])
-                return img_cond.unsqueeze(2).float().cuda(), self._to3channel(self.img[idx]).unsqueeze(2), self.zero_pad(self.era5_img[idx])
-            #self.zero_pad(torch.stack([img_cond, self.era5_img[idx]], dim=2))
+                return img_cond.unsqueeze(2).float().cuda(), self._to3channel(self.img[idx]).unsqueeze(2).float(), zero_pad(self.era5_img[idx])
+            #zero_pad(torch.stack([img_cond, self.era5_img[idx]], dim=2))
             #return self._to3channel(self.img_o[idx]), self.img_n[idx], self.era5[idx]
 
     def get_extreme(self, idx):
         return self.extremes[idx]
-    
-    def zero_pad(self, x):
-        padding = (0, 0, 0, 0, 0, t-1)
-        #return F.pad(x, padding)
-        return F.pad(x.unsqueeze(2), padding)
 
 # ---------------------------------------------
 # Other helpful methods
@@ -661,7 +693,7 @@ def get_map_img(m, ax, data, map_bounds, era5=False,
                 title=None,
                 y_labels=[1, 0, 0, 0],
                 x_labels=[0, 0, 0, 1], colorbar=False):
-    
+
     kwargs = {
         "linewidth": 0.5,
         "color": "k",
@@ -671,7 +703,7 @@ def get_map_img(m, ax, data, map_bounds, era5=False,
     if colorbar:
         divider = make_axes_locatable(ax)
         cax = divider.append_axes('right', size='5%', pad=0.1)
-        
+
     m.drawcoastlines(**kwargs)
     m.drawcountries(**kwargs)
     m.drawstates(**kwargs)
@@ -686,7 +718,7 @@ def get_map_img(m, ax, data, map_bounds, era5=False,
     if title: ax.set_title(title)
 
     if colorbar:
-        fig.colorbar(im, cax=cax, orientation='vertical')    
+        fig.colorbar(im, cax=cax, orientation='vertical')
 
     return im
 
@@ -695,7 +727,7 @@ def img2req(img):
     min_x = torch.min(torch.nonzero(mask)[:, 0])
     min_y = torch.min(torch.nonzero(mask)[:, 1])
     pad = 2
-    
+
     if min_x > min_y:  img = img[0: min_x-pad, :]
     else:  img = img[:, 0: min_y-pad]
 
@@ -716,9 +748,9 @@ def to3channel(x):
 def rotate90(x, y, z):
     return torch.rot90(x, dims=[-2, -1]), torch.rot90(y, dims=[-2, -1]), torch.rot90(z, dims=[-2, -1])
 
-def get_bbox_square(x_0, y_0, hs_length):   
+def get_bbox_square(x_0, y_0, hs_length):
     wgs84 = Proj(init='epsg:4326')
-    center_x, center_y = wgs84(x_0, y_0)   
+    center_x, center_y = wgs84(x_0, y_0)
     bbox_wgs84 = [
         (center_x - hs_length, center_y - hs_length),  # Bottom left corner
         (center_x + hs_length, center_y - hs_length),  # Bottom right corner
@@ -726,21 +758,21 @@ def get_bbox_square(x_0, y_0, hs_length):
         (center_x - hs_length, center_y + hs_length),  # Top left corner
         (center_x - hs_length, center_y - hs_length)   # Repeat the first point to close the square
     ]
-    
+
     bbox_utm = []
     for x, y in bbox_wgs84:
         lon, lat = wgs84(x, y, inverse=True)
         bbox_utm.append((lon, lat))
-    
+
     west_lon, south_lat, east_lon, north_lat = bbox_utm[0][0], bbox_utm[0][1], bbox_utm[2][0], bbox_utm[2][1]
     wbox = (west_lon, south_lat, east_lon, north_lat)
-    
+
     return wbox
 
 
 def np64_to_datetime(date):
     """
-    Converts a numpy datetime64 object to a python datetime object 
+    Converts a numpy datetime64 object to a python datetime object
     Input:
       date - a np.datetime64 object
     Output:
@@ -758,11 +790,11 @@ def get_cropped_era5_ds(ds, wbox_bounds):
 
     mask_lon = (ds.longitude >= min_lon) & (ds.longitude <= max_lon)
     mask_lat = (ds.latitude >= min_lat) & (ds.latitude <= max_lat)
-    
+
     return ds.where(mask_lon & mask_lat, drop=True)
 
 def get_insat3d_ir108_scn(h5_file, map_bounds):
-    scn = satpy.Scene(reader="insat3d_img_l1b_h5", 
+    scn = satpy.Scene(reader="insat3d_img_l1b_h5",
                       filenames=[h5_file])
     scn.load(['TIR1'])
     mc_scn = scn.crop(ll_bbox=map_bounds).resample(resampler='native')
@@ -777,16 +809,16 @@ def get_himawari_ir108_scn(hr_dir, map_bounds):
     mc_scn = scn.crop(ll_bbox=map_bounds).resample(resampler='native')
     ir108_scn = mc_scn['B13']
     return ir108_scn
-    
+
 def get_era5_map(era5_nc_files, map_bounds=None):
     era5 = xarray.open_mfdataset(era5_nc_files)
     if map_bounds:
         mc_era5 = get_cropped_era5_ds(era5, map_bounds)
         lat = mc_era5.variables["latitude"][:]
         lon = mc_era5.variables["longitude"][:]
-        era5_map_bounds = [np.min(lon).values, 
-                      np.min(lat).values, 
-                      np.max(lon).values, 
+        era5_map_bounds = [np.min(lon).values,
+                      np.min(lat).values,
+                      np.max(lon).values,
                       np.max(lat).values]
         return mc_era5, era5_map_bounds
     return era5
@@ -795,7 +827,7 @@ def rev_scn(scn):
     return scn.isel(y=slice(None, None, -1)).isel(x=slice(None, None, -1))
 
 def get_msg_ir108_scn(nat_file, map_bounds):
-    scn = satpy.Scene(reader="seviri_l1b_native", 
+    scn = satpy.Scene(reader="seviri_l1b_native",
                   filenames=[nat_file])
     scn.load(['IR_108'])
     mc_scn = scn.crop(ll_bbox=map_bounds).resample(resampler='native')
@@ -803,7 +835,7 @@ def get_msg_ir108_scn(nat_file, map_bounds):
     return ir108_scn
 
 def get_goes_ir108_scn(filename, map_bounds):
-    scn = satpy.Scene(reader="abi_l1b", 
+    scn = satpy.Scene(reader="abi_l1b",
                   filenames=[filename])
     scn.load(['C13'])
     mc_scn = scn.crop(ll_bbox=map_bounds).resample(resampler='native')
@@ -819,6 +851,104 @@ def get_bz2_files(folder):
 
 def transform_make_sq_image(img):
     max_px = max(img.shape)
-    img = np.pad(img, ((0, max_px - img.shape[0]), (0, max_px - img.shape[1])), 
+    img = np.pad(img, ((0, max_px - img.shape[0]), (0, max_px - img.shape[1])),
              mode='constant')
     return img
+
+def zero_pad(x):
+    padding = (0, 0, 0, 0, 0, t-1)
+    #return F.pad(x, padding)
+    return F.pad(x.unsqueeze(2), padding)
+
+def run_name_info(run_name):
+    dim = 32
+    if "dim32" in run_name:
+        dim = 32
+    elif "dim64" in run_name:
+        dim = 64
+    elif "dim128" in run_name:
+        dim = 128
+    elif "dim160" in run_name:
+        dim = 160
+    elif "dim256" in run_name:
+        dim = 256
+        
+    cond_dim = 1024
+    if "_2048" in run_name:
+        cond_dim = 2048 
+
+    o_size = 64
+    if "v_128" in run_name:
+        o_size = 128
+    
+    if "v" in run_name: 
+        unet1 = Unet3D(
+            dim = dim,
+            cond_dim = cond_dim,
+            dim_mults = (1, 2, 4, 8),
+            num_resnet_blocks = 3,
+            layer_attns = (False, True, True, True),
+        )  
+    else:
+        unet1 = Unet(
+            dim = dim,
+            cond_dim = cond_dim,
+            dim_mults = (1, 2, 4, 8),
+            num_resnet_blocks = 3,
+            layer_attns = (False, True, True, True),
+        )
+    unets = [unet1]
+
+    return unets, o_size
+
+def sample(dataloader, run_name, idx, args, ckpt_trainer_path, random=True):
+    if not random:
+        dataloader.shuffle = False
+        dataloader.create_batches(1)
+
+    batch_idx = dataloader.random_idx[idx]
+
+    vid_cond, vid, era5 = dataloader.get_batch(batch_idx)
+    if "v" in run_name:
+        from helpers import apply_mask_to_video
+
+        unets, O_SIZE = run_name_info(run_name)  
+        imagen = Imagen(
+            unets = unets,
+            image_sizes = (args.image_size),
+            timesteps = 250,
+            cond_drop_prob = 0.1,
+            condition_on_continuous = True,
+            continuous_embed_dim = args.continuous_embed_dim,
+        )
+
+        trainer = ImagenTrainer(imagen, lr=args.lr, verbose=False).cuda()
+        trainer.load(ckpt_trainer_path)  
+        cond_embeds = era5.reshape(1, -1).float().cuda()
+        ema_sampled_vid = imagen.sample(
+                    batch_size = vid.shape[0],       
+                    cond_scale = 3.,
+                    continuous_embeds=cond_embeds,
+                    use_tqdm = False,
+                    video_frames = vid.shape[2],
+                    cond_video_frames=vid_cond
+                )
+        ema_sampled_vid = apply_mask_to_video(ema_sampled_vid, vid_cond)
+        ema_sampled_images = rearrange(ema_sampled_vid, 'b c t h w -> (b t) c h w')
+        img_64 = rearrange(vid, 'b c t h w -> (b t) c h w')
+    else:
+        img_64 = rearrange(vid, 'b c t h w -> (b t) c h w')
+        era5 = rearrange(era5, 'b c t h w -> (b t) c h w')
+        ema_sampled_images = torch.empty(0, vid.shape[1], vid.shape[3], vid.shape[4])
+        fcdiff_model = FCDiffModel(run_name, dataloader.get_extreme(batch_idx), ckpt_trainer_path)
+        prev_img = unnormalize(vid_cond[0, 0, 0, :, :].cpu(), fcdiff_model.max_value, fcdiff_model.min_value).unsqueeze(0)
+        for i in range(0, era5.shape[0]):
+            era5_64 = torch.cat([prev_img, era5[i:i+1].squeeze(0)]).unsqueeze(0)
+            cond_embeds = era5_64.reshape(era5_64.shape[0], -1).float().cuda()
+            unnormalized, normalized = fcdiff_model.get_both_images(cond_embeds)
+            ema_sampled_images = torch.cat([ema_sampled_images, normalized.cpu()])
+            prev_img = unnormalized.cpu()
+        
+    y_true = img_64.cpu()
+    y_pred = ema_sampled_images.cpu()
+    return y_true, y_pred
